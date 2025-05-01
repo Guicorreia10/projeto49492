@@ -52,7 +52,7 @@ const TabsLayout = () => {
           tabBarIcon: ({ focused }) => <TabIcon icon={icons.home} focused={focused} title="Home" />,
         }}
       />
-      
+
       {/* Aba Histórico */}
       <Tabs.Screen
         name="explore"
@@ -64,19 +64,7 @@ const TabsLayout = () => {
           ),
         }}
       />
-      
-      {/* Aba Análise Comida */}
-      <Tabs.Screen
-        name="analisecomida"
-        options={{
-          title: 'Análise Comida',
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon icon={icons.bell} focused={focused} title="Análise" />
-          ),
-        }}
-      />
-      
+
       {/* Aba Conectar */}
       <Tabs.Screen
         name="conectar"
@@ -86,8 +74,8 @@ const TabsLayout = () => {
           tabBarIcon: ({ focused }) => <TabIcon icon={icons.bed} focused={focused} title="Conectar" />,
         }}
       />
-      
-      {/* Aba Entrada Manual */}
+
+      {/* Aba Entrada Manual (Somente a página principal) */}
       <Tabs.Screen
         name="manual-input"
         options={{
@@ -96,7 +84,7 @@ const TabsLayout = () => {
           tabBarIcon: ({ focused }) => <TabIcon icon={icons.edit} focused={focused} title="Manual" />,
         }}
       />
-      
+
       {/* Aba Perfil */}
       <Tabs.Screen
         name="perfil"

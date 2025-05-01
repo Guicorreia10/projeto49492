@@ -6,7 +6,8 @@
       "@/*": ["./*"]
     },
     "typeRoots": [
-      "./node_modules/@types"
+      "./node_modules/@types", // Inclui os tipos das dependências
+      "./types" // Opcional: para declarações de tipos personalizados
     ]
   },
   "include": [
