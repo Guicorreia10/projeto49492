@@ -15,6 +15,7 @@ interface Registro {
   detalhesSono?: string;
 }
 
+
 const Explore = () => {
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [selectedRegistro, setSelectedRegistro] = useState<Registro | null>(null);
