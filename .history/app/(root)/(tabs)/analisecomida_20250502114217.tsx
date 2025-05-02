@@ -20,7 +20,7 @@ import {
 } from '../../utils/utils';
 
 const AnaliseComida: React.FC = () => {
-  const [images, setImages] = useState<string[]>([]);  // Array para armazenar múltiplas imagens
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [nutritionalData, setNutritionalData] = useState<any | null>(null);
   const [quantity, setQuantity] = useState('100');
@@ -35,7 +35,8 @@ const AnaliseComida: React.FC = () => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      setImages((prevImages) => [...prevImages, uri]);  // Adiciona a nova imagem ao array
+      setImageUri(uri);
+      analyzeImage(uri);
     }
   };
 
@@ -83,7 +84,7 @@ const AnaliseComida: React.FC = () => {
 
   const clearMeal = () => {
     setMealData([]);  // Limpa os dados da refeição
-    setImages([]);  // Limpa as imagens
+    setImageUri(null);  // Limpa a imagem
     setQuantity('100');  // Reseta a quantidade para o valor padrão
   };
 
@@ -109,15 +110,9 @@ const AnaliseComida: React.FC = () => {
 
         {isAnalyzing && <ActivityIndicator size="large" color="#3b82f6" style={styles.loading} />}
 
-        {/* Exibir todas as imagens selecionadas */}
-        <View style={styles.imagesContainer}>
-          {images.map((uri, index) => (
-            <Image key={index} source={{ uri }} style={styles.image} />
-          ))}
-        </View>
-
-        {images.length > 0 && (
+        {imageUri && (
           <>
+            <Image source={{ uri: imageUri }} style={styles.image} />
             <Text style={styles.label}>Quantidade (g):</Text>
             <TextInput
               style={styles.input}
@@ -126,15 +121,6 @@ const AnaliseComida: React.FC = () => {
               value={quantity}
               onChangeText={setQuantity}
             />
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => analyzeImage(images[images.length - 1])}  // Chama a função para analisar a última imagem
-              disabled={isAnalyzing}
-            >
-              <Text style={styles.buttonText}>
-                {isAnalyzing ? 'A analisar...' : 'Adicionar Alimento'}
-              </Text>
-            </TouchableOpacity>
           </>
         )}
 
@@ -229,16 +215,10 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 12,
-    marginVertical: 10,
+    marginVertical: 20,
     borderColor: '#ddd',
     borderWidth: 1,
     backgroundColor: '#f5f5f5',
-  },
-  imagesContainer: {
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    justifyContent: 'center', 
-    marginVertical: 20,
   },
   label: {
     fontSize: 16,

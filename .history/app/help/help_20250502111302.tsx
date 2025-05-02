@@ -19,7 +19,7 @@ const Help = () => {
             Ajuda e Informações
           </Text>
         </View>
-
+        
         {/* Botão Voltar */}
         <TouchableOpacity
           onPress={() => router.back()}
@@ -34,7 +34,7 @@ const Help = () => {
         >
           <Text style={{ fontSize: 16, color: '#fff', fontWeight: 'bold' }}>⬅️ Voltar</Text>
         </TouchableOpacity>
-
+        
         {/* Introdução */}
         <Text className="text-lg text-gray-700 text-center mt-5">
           Explore os tópicos abaixo para obter mais detalhes sobre como usar a nossa aplicação.

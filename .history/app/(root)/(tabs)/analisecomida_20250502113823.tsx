@@ -20,7 +20,7 @@ import {
 } from '../../utils/utils';
 
 const AnaliseComida: React.FC = () => {
-  const [images, setImages] = useState<string[]>([]);  // Array para armazenar múltiplas imagens
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [nutritionalData, setNutritionalData] = useState<any | null>(null);
   const [quantity, setQuantity] = useState('100');
@@ -35,7 +35,8 @@ const AnaliseComida: React.FC = () => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      setImages((prevImages) => [...prevImages, uri]);  // Adiciona a nova imagem ao array
+      setImageUri(uri);
+      analyzeImage(uri);
     }
   };
 
@@ -81,12 +82,6 @@ const AnaliseComida: React.FC = () => {
     return { totalCalories, totalCarbs, totalGlycemicImpact };
   };
 
-  const clearMeal = () => {
-    setMealData([]);  // Limpa os dados da refeição
-    setImages([]);  // Limpa as imagens
-    setQuantity('100');  // Reseta a quantidade para o valor padrão
-  };
-
   const { totalCalories, totalCarbs, totalGlycemicImpact } = calculateTotal();
 
   return (
@@ -109,15 +104,9 @@ const AnaliseComida: React.FC = () => {
 
         {isAnalyzing && <ActivityIndicator size="large" color="#3b82f6" style={styles.loading} />}
 
-        {/* Exibir todas as imagens selecionadas */}
-        <View style={styles.imagesContainer}>
-          {images.map((uri, index) => (
-            <Image key={index} source={{ uri }} style={styles.image} />
-          ))}
-        </View>
-
-        {images.length > 0 && (
+        {imageUri && (
           <>
+            <Image source={{ uri: imageUri }} style={styles.image} />
             <Text style={styles.label}>Quantidade (g):</Text>
             <TextInput
               style={styles.input}
@@ -126,15 +115,6 @@ const AnaliseComida: React.FC = () => {
               value={quantity}
               onChangeText={setQuantity}
             />
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => analyzeImage(images[images.length - 1])}  // Chama a função para analisar a última imagem
-              disabled={isAnalyzing}
-            >
-              <Text style={styles.buttonText}>
-                {isAnalyzing ? 'A analisar...' : 'Adicionar Alimento'}
-              </Text>
-            </TouchableOpacity>
           </>
         )}
 
@@ -159,16 +139,6 @@ const AnaliseComida: React.FC = () => {
             </View>
           </View>
         )}
-
-        {/* Botão para limpar a refeição */}
-        {mealData.length > 0 && (
-          <TouchableOpacity style={styles.clearButton} onPress={clearMeal}>
-            <Text style={styles.buttonText}>Limpar Refeição</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Padding extra para garantir que o conteúdo não seja cortado pela barra de navegação */}
-        <View style={styles.bottomPadding} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -185,7 +155,7 @@ const styles = StyleSheet.create({
   scroll: {
     alignItems: 'center',
     padding: 20,
-    paddingBottom: 100,  // Aumenta o padding no final para dar espaço para o botão de limpar
+    paddingBottom: 40,
   },
   title: {
     fontSize: 24,
@@ -210,18 +180,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  clearButton: {
-    backgroundColor: '#ef4444',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-  },
   loading: {
     marginTop: 20,
   },
@@ -229,16 +187,10 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 12,
-    marginVertical: 10,
+    marginVertical: 20,
     borderColor: '#ddd',
     borderWidth: 1,
     backgroundColor: '#f5f5f5',
-  },
-  imagesContainer: {
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    justifyContent: 'center', 
-    marginVertical: 20,
   },
   label: {
     fontSize: 16,
@@ -283,8 +235,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 6,
     color: '#555',
-  },
-  bottomPadding: {
-    height: 100,  // Adiciona um padding no final para garantir que o botão "Limpar Refeição" seja visível
   },
 });

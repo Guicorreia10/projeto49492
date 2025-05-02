@@ -70,15 +70,23 @@ const AnaliseComida: React.FC = () => {
   const calculateTotal = () => {
     let totalCalories = 0;
     let totalCarbs = 0;
+    let totalProtein = 0;
+    let totalFat = 0;
+    let totalFiber = 0;
     let totalGlycemicImpact = 0;
+    let totalGlycose = 0;
 
     mealData.forEach(item => {
       totalCalories += item.calories;
       totalCarbs += item.carbs;
+      totalProtein += item.protein;  // Somando proteínas
+      totalFat += item.fat;  // Somando gordura
+      totalFiber += item.fiber;  // Somando fibra
       totalGlycemicImpact += item.glycemicImpact.value;  // Exemplo de como somar o impacto glicêmico
+      totalGlycose += item.glycose;  // Somando glicose
     });
 
-    return { totalCalories, totalCarbs, totalGlycemicImpact };
+    return { totalCalories, totalCarbs, totalProtein, totalFat, totalFiber, totalGlycemicImpact, totalGlycose };
   };
 
   const clearMeal = () => {
@@ -87,7 +95,7 @@ const AnaliseComida: React.FC = () => {
     setQuantity('100');  // Reseta a quantidade para o valor padrão
   };
 
-  const { totalCalories, totalCarbs, totalGlycemicImpact } = calculateTotal();
+  const { totalCalories, totalCarbs, totalProtein, totalFat, totalFiber, totalGlycemicImpact, totalGlycose } = calculateTotal();
 
   return (
     <KeyboardAvoidingView
@@ -147,6 +155,10 @@ const AnaliseComida: React.FC = () => {
                 <Text style={styles.info}>⚖️ Quantidade: {food.quantity} g</Text>
                 <Text style={styles.info}>🔥 Calorias: {food.calories.toFixed(1)} kcal</Text>
                 <Text style={styles.info}>🍞 Carboidratos: {food.carbs.toFixed(1)} g</Text>
+                <Text style={styles.info}>🍗 Proteínas: {food.protein.toFixed(1)} g</Text>  {/* Adicionando Proteínas */}
+                <Text style={styles.info}>🧈 Gordura: {food.fat.toFixed(1)} g</Text>  {/* Adicionando Gordura */}
+                <Text style={styles.info}>🍃 Fibra: {food.fiber.toFixed(1)} g</Text>  {/* Adicionando Fibra */}
+                <Text style={styles.info}>🩸 Glicose: {food.glycose.toFixed(1)} g</Text>  {/* Adicionando Glicose */}
                 <Text style={styles.info}>📊 Índice Glicêmico: {food.glycemicIndex}</Text>
                 <Text style={styles.info}>💡 {food.glycemicImpact.description}</Text>
               </View>
@@ -155,6 +167,10 @@ const AnaliseComida: React.FC = () => {
             <View style={styles.result}>
               <Text style={styles.info}>🔥 Total Calorias: {totalCalories.toFixed(1)} kcal</Text>
               <Text style={styles.info}>🍞 Total Carboidratos: {totalCarbs.toFixed(1)} g</Text>
+              <Text style={styles.info}>🍗 Total Proteínas: {totalProtein.toFixed(1)} g</Text>
+              <Text style={styles.info}>🧈 Total Gordura: {totalFat.toFixed(1)} g</Text>
+              <Text style={styles.info}>🍃 Total Fibra: {totalFiber.toFixed(1)} g</Text>
+              <Text style={styles.info}>🩸 Total Glicose: {totalGlycose.toFixed(1)} g</Text>  {/* Total de Glicose */}
               <Text style={styles.info}>📊 Total Impacto Glicêmico: {totalGlycemicImpact.toFixed(1)}</Text>
             </View>
           </View>
@@ -263,28 +279,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 30,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 10,
-    textAlign: 'center',
-    color: '#3b82f6',
   },
   result: {
-    marginTop: 15,
+    marginBottom: 15,
   },
   info: {
     fontSize: 16,
-    marginBottom: 6,
-    color: '#555',
+    marginBottom: 5,
+    color: '#333',
   },
   bottomPadding: {
-    height: 100,  // Adiciona um padding no final para garantir que o botão "Limpar Refeição" seja visível
+    height: 50,
   },
 });

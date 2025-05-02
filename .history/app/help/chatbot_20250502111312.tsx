@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'; // Importando KeyboardAwareScrollView
 
 const Chatbot: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -57,16 +56,14 @@ const Chatbot: React.FC = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <KeyboardAwareScrollView contentContainerStyle={{ flex: 1 }}>
-        <GiftedChat
-          messages={messages}
-          onSend={(msgs) => onSend(msgs)}
-          user={{ _id: 1 }}
-          placeholder="Escreve aqui..."
-          showUserAvatar
-          renderUsernameOnMessage
-        />
-      </KeyboardAwareScrollView>
+      <GiftedChat
+        messages={messages}
+        onSend={(msgs) => onSend(msgs)}
+        user={{ _id: 1 }}
+        placeholder="Escreve aqui..."
+        showUserAvatar
+        renderUsernameOnMessage
+      />
     </SafeAreaView>
   );
 };
