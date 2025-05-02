@@ -38,7 +38,7 @@ export default function Index() {
 
         if (data && data.length > 0) {
           const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
-          setGlucoseValue(glicose); // Atualiza glicose com o dado mais recente
+          setGlucoseValue(glicose);
 
           const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
           const qualityScore = qualidade_sono * 0.3;
@@ -70,12 +70,12 @@ export default function Index() {
     fetchData();
     resetChallengesIfNecessary();
 
-    // Atualiza os dados a cada 10 segundos
+    // Atualiza os dados a cada 10 segundos (ajustar conforme necessário)
     const intervalId = setInterval(() => {
       fetchData();
     }, 10000);
 
-    return () => clearInterval(intervalId); // Limpar o intervalo quando o componente for desmontado
+    return () => clearInterval(intervalId);  // Limpar o intervalo quando o componente for desmontado
   }, [lastReset]);
 
   const resetChallengesIfNecessary = () => {
@@ -118,7 +118,7 @@ export default function Index() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Resumo do Sono</Text>
           <Text style={styles.cardValue}>
-            {sleepEvaluation !== null ? `${sleepEvaluation} / 10` : "A carregar..."}
+            {sleepEvaluation ? `${sleepEvaluation} / 10` : "A carregar..."}
           </Text>
           <Text style={styles.cardText}>{sleepMessage}</Text>
         </View>
@@ -126,7 +126,7 @@ export default function Index() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Glicose Atual</Text>
           <Text style={styles.cardValue}>
-            {glucoseValue !== null ? `${glucoseValue} mg/dL` : "A carregar..."}
+            {glucoseValue ? `${glucoseValue} mg/dL` : "A carregar..."}
           </Text>
           <Text style={styles.cardText}>{glucoseMessage}</Text>
         </View>

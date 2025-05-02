@@ -107,21 +107,21 @@ const Explore = () => {
 
       {/* Calendário */}
       <Calendar
-  onDayPress={(day: { dateString: string; day: number; month: number; year: number; timestamp: number }) =>
-    setSelectedDate(day.dateString) // Atualiza a data selecionada
-  }
-  markedDates={{
-    [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
-  }}
-  style={styles.calendar}
-  theme={{
-    selectedDayBackgroundColor: "#4A90E2",
-    selectedDayTextColor: "#fff",
-    todayTextColor: "#4A90E2",
-    dayTextColor: "#000",
-    arrowColor: "#4A90E2",
-  }}
-/>
+        onDayPress={(day: { dateString: string; day: number; month: number; year: number; timestamp: number }) =>
+          setSelectedDate(day.dateString) // Atualiza a data selecionada
+        }
+        markedDates={{
+          [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
+        }}
+        style={styles.calendar}
+        theme={{
+          selectedDayBackgroundColor: "#4A90E2",
+          selectedDayTextColor: "#fff",
+          todayTextColor: "#4A90E2",
+          dayTextColor: "#000",
+          arrowColor: "#4A90E2",
+        }}
+      />
 
       {/* Lista de Registos */}
       <FlatList

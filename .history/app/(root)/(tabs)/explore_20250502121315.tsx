@@ -22,7 +22,7 @@ const Explore = () => {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]); // Data selecionada (hoje)
 
   useEffect(() => {
-    const fetchRegistos = async () => {
+    const fetchRegistros = async () => {
       try {
         // Busca dados de glicose e sono no Supabase
         const { data, error } = await supabase
@@ -55,7 +55,7 @@ const Explore = () => {
       }
     };
 
-    fetchRegistos();
+    fetchRegistros();
   }, []);
 
   const registrosFiltrados = registros.filter((registro) => registro.data === selectedDate);

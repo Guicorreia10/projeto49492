@@ -5,7 +5,7 @@ import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../../lib/supabase";
 import { Calendar } from "react-native-calendars";
 
-interface Registo {
+interface Registro {
   id: string;
   data: string; // Data formatada
   dia: string; // Nome do dia (e.g., Seg, Ter)
@@ -16,13 +16,13 @@ interface Registo {
 }
 
 const Explore = () => {
-  const [registros, setRegistros] = useState<Registo[]>([]);
-  const [selectedRegistro, setSelectedRegistro] = useState<Registo | null>(null);
+  const [registros, setRegistros] = useState<Registro[]>([]);
+  const [selectedRegistro, setSelectedRegistro] = useState<Registro | null>(null);
   const [modalVisivel, setModalVisivel] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]); // Data selecionada (hoje)
 
   useEffect(() => {
-    const fetchRegistos = async () => {
+    const fetchRegistros = async () => {
       try {
         // Busca dados de glicose e sono no Supabase
         const { data, error } = await supabase
@@ -46,7 +46,7 @@ const Explore = () => {
             tipo: item.glicose ? "glicose" : "sono",
             valorGlicose: item.glicose ? item.glicose.toString() : undefined,
             detalhesSono: item.sono ? `Duração do sono: ${item.sono} horas` : undefined,
-          })) as Registo[];
+          })) as Registro[];
           setRegistros(formattedData);
         }
       } catch (err) {
@@ -55,12 +55,12 @@ const Explore = () => {
       }
     };
 
-    fetchRegistos();
+    fetchRegistros();
   }, []);
 
   const registrosFiltrados = registros.filter((registro) => registro.data === selectedDate);
 
-  const renderItem = ({ item }: { item: Registo }) => {
+  const renderItem = ({ item }: { item: Registro }) => {
     let iconComponent;
 
     if (item.tipo === "glicose") {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, FlatList, Modal, Alert, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList, Modal, Alert, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../../lib/supabase";
@@ -107,31 +107,33 @@ const Explore = () => {
 
       {/* Calendário */}
       <Calendar
-  onDayPress={(day: { dateString: string; day: number; month: number; year: number; timestamp: number }) =>
-    setSelectedDate(day.dateString) // Atualiza a data selecionada
-  }
-  markedDates={{
-    [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
-  }}
-  style={styles.calendar}
-  theme={{
-    selectedDayBackgroundColor: "#4A90E2",
-    selectedDayTextColor: "#fff",
-    todayTextColor: "#4A90E2",
-    dayTextColor: "#000",
-    arrowColor: "#4A90E2",
-  }}
-/>
+        onDayPress={(day: { dateString: string; day: number; month: number; year: number; timestamp: number }) =>
+          setSelectedDate(day.dateString) // Atualiza a data selecionada
+        }
+        markedDates={{
+          [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
+        }}
+        style={styles.calendar}
+        theme={{
+          selectedDayBackgroundColor: "#4A90E2",
+          selectedDayTextColor: "#fff",
+          todayTextColor: "#4A90E2",
+          dayTextColor: "#000",
+          arrowColor: "#4A90E2",
+        }}
+      />
 
       {/* Lista de Registos */}
-      <FlatList
-        data={registrosFiltrados}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Sem registros para este dia.</Text>
-        }
-      />
+      <ScrollView contentContainerStyle={styles.listContainer}>
+        <FlatList
+          data={registrosFiltrados}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>Sem registros para este dia.</Text>
+          }
+        />
+      </ScrollView>
 
       {/* Modal */}
       <Modal
@@ -168,6 +170,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f0f0f0", padding: 10 },
   header: { fontSize: 24, fontWeight: "bold", marginBottom: 10, textAlign: "center" },
   calendar: { marginBottom: 20, borderRadius: 10, elevation: 1 },
+  listContainer: { paddingBottom: 20 },
   item: { backgroundColor: "white", padding: 10, borderRadius: 5, marginBottom: 10 },
   itemHeader: { flexDirection: "column", marginBottom: 5 },
   data: { fontSize: 14, fontWeight: "600", color: "#555", marginBottom: 5 },
