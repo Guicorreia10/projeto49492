@@ -1,26 +1,15 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Modal,
-  Alert,
-  TouchableOpacity,
-  ScrollView, // Adicionando o ScrollView
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, Modal, Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../../lib/supabase";
 import { Calendar } from "react-native-calendars";
-import * as Print from "expo-print";
-import * as Sharing from "expo-sharing"; // IMPORTAÇÃO CORRETA
 
 interface Registo {
   id: string;
-  data: string;
-  dia: string;
-  hora: string;
+  data: string; // Data 
+  dia: string; // Nome do dia (e.g., Seg, Ter)
+  hora: string; // Hora formatada
   tipo: "glicose" | "sono";
   valorGlicose?: string;
   detalhesSono?: string;
@@ -30,13 +19,12 @@ const Explore = () => {
   const [registros, setRegistros] = useState<Registo[]>([]);
   const [selectedRegistro, setSelectedRegistro] = useState<Registo | null>(null);
   const [modalVisivel, setModalVisivel] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]); // Data selecionada (hoje)
 
   useEffect(() => {
     const fetchRegistos = async () => {
       try {
+        // Busca dados de glicose e sono no Supabase
         const { data, error } = await supabase
           .from("dados_usuario")
           .select("id, created_at, glicose, sono")
@@ -49,9 +37,10 @@ const Explore = () => {
         }
 
         if (data) {
+          // Formata os dados recebidos
           const formattedData = data.map((item) => ({
             id: item.id,
-            data: new Date(item.created_at).toISOString().split("T")[0],
+            data: new Date(item.created_at).toISOString().split("T")[0], // Data formatada (YYYY-MM-DD)
             dia: new Date(item.created_at).toLocaleDateString("pt-PT", { weekday: "short" }),
             hora: new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             tipo: item.glicose ? "glicose" : "sono",
@@ -72,16 +61,21 @@ const Explore = () => {
   const registrosFiltrados = registros.filter((registro) => registro.data === selectedDate);
 
   const renderItem = ({ item }: { item: Registo }) => {
-    const iconComponent =
-      item.tipo === "glicose" ? (
+    let iconComponent;
+
+    if (item.tipo === "glicose") {
+      iconComponent = (
         <View style={[styles.iconBackground, { backgroundColor: "blue" }]}>
           <MaterialCommunityIcons name="water-opacity" size={16} color="white" />
         </View>
-      ) : (
+      );
+    } else if (item.tipo === "sono") {
+      iconComponent = (
         <View style={[styles.iconBackground, { backgroundColor: "purple" }]}>
           <Ionicons name="bed" size={16} color="white" />
         </View>
       );
+    }
 
     return (
       <TouchableOpacity
@@ -107,102 +101,39 @@ const Explore = () => {
     );
   };
 
-  const exportarParaPDF = async () => {
-    const html = `
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <style>
-            body { font-family: Arial, sans-serif; padding: 24px; }
-            h1 { text-align: center; color: #4A90E2; }
-            .registo { margin-bottom: 16px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
-            .linha { margin-bottom: 4px; }
-            .titulo { font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <h1>Histórico de Registos</h1>
-          ${registros.map((r) => `
-            <div class="registo">
-              <div class="linha"><span class="titulo">Data:</span> ${r.data} (${r.dia})</div>
-              <div class="linha"><span class="titulo">Hora:</span> ${r.hora}</div>
-              <div class="linha"><span class="titulo">Tipo:</span> ${r.tipo === "glicose" ? "Glicose" : "Sono"}</div>
-              <div class="linha">
-                ${r.tipo === "glicose" ? `<span class="titulo">Valor:</span> ${r.valorGlicose} mg/dL` : r.detalhesSono}
-              </div>
-            </div>
-          `).join("")}
-        </body>
-      </html>
-    `;
-
-    try {
-      const { uri } = await Print.printToFileAsync({ html });
-
-      Alert.alert(
-        "Exportar PDF",
-        "O que pretende fazer com o PDF?",
-        [
-          {
-            text: "Partilhar",
-            onPress: async () => {
-              await Sharing.shareAsync(uri, {
-                UTI: ".pdf",
-                mimeType: "application/pdf",
-              });
-            },
-          },
-          {
-            text: "Guardar no dispositivo",
-            onPress: () => {
-              Alert.alert("Ficheiro guardado", `PDF guardado em:\n${uri}`);
-            },
-          },
-          {
-            text: "Cancelar",
-            style: "cancel",
-          },
-        ],
-        { cancelable: true }
-      );
-    } catch (erro) {
-      console.error("Erro ao gerar PDF:", erro);
-      Alert.alert("Erro", "Ocorreu um problema ao gerar o ficheiro PDF.");
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Histórico</Text>
 
-      <TouchableOpacity style={styles.botaoExportar} onPress={exportarParaPDF}>
-        <Text style={styles.textoBotao}>Exportar registos em PDF</Text>
-      </TouchableOpacity>
+      {/* Calendário */}
+      <Calendar
+  onDayPress={(day: { dateString: string; day: number; month: number; year: number; timestamp: number }) =>
+    setSelectedDate(day.dateString) // Atualiza a data selecionada
+  }
+  markedDates={{
+    [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
+  }}
+  style={styles.calendar}
+  theme={{
+    selectedDayBackgroundColor: "#4A90E2",
+    selectedDayTextColor: "#fff",
+    todayTextColor: "#4A90E2",
+    dayTextColor: "#000",
+    arrowColor: "#4A90E2",
+  }}
+/>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Calendar
-          onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
-          markedDates={{
-            [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
-          }}
-          style={styles.calendar}
-          theme={{
-            selectedDayBackgroundColor: "#4A90E2",
-            selectedDayTextColor: "#fff",
-            todayTextColor: "#4A90E2",
-            dayTextColor: "#000",
-            arrowColor: "#4A90E2",
-          }}
-        />
+      {/* Lista de Registos */}
+      <FlatList
+        data={registrosFiltrados}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>Sem registros para este dia.</Text>
+        }
+      />
 
-        <FlatList
-          data={registrosFiltrados}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={<Text style={styles.emptyText}>Sem registos para este dia.</Text>}
-        />
-      </ScrollView>
-
+      {/* Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -262,22 +193,6 @@ const styles = StyleSheet.create({
   textStyle: { color: "white", fontWeight: "bold", textAlign: "center" },
   modalTitle: { marginBottom: 15, textAlign: "center", fontSize: 20, fontWeight: "bold" },
   iconBackground: { borderRadius: 12, width: 24, height: 24, justifyContent: "center", alignItems: "center" },
-  botaoExportar: {
-    backgroundColor: "#4A90E2",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  textoBotao: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    paddingBottom: 20, // Garantir espaço no fundo para conteúdo extra
-  },
 });
 
 export default Explore;

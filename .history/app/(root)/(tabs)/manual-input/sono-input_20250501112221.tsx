@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../../../../lib/supabase';
-import { useRouter } from 'expo-router';
 
 const SonoInputScreen = () => {
   const [sleepHours, setSleepHours] = useState('');
@@ -10,7 +9,6 @@ const SonoInputScreen = () => {
   const [wakeFeeling, setWakeFeeling] = useState('');
   const [deviceUsage, setDeviceUsage] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -84,21 +82,6 @@ const SonoInputScreen = () => {
           onChangeText={(text) => setSleepHours(text)}
         />
       </View>
-
-      {/* Botão Voltar */}
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={{
-                  position: 'absolute',
-                  top: 20,
-                  left: 10,
-                  padding: 10,
-                  backgroundColor: '#007AFF',
-                  borderRadius: 5,
-                }}
-              >
-                <Text style={{ fontSize: 16, color: '#fff', fontWeight: 'bold' }}>⬅️ Voltar</Text>
-              </TouchableOpacity>
 
       {/* Pergunta 2: Qualidade do sono (0-10) */}
       <View style={styles.inputGroup}>

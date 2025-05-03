@@ -37,7 +37,20 @@ const ManualInputScreen = () => {
       >
         <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Dados do Sono</Text>
       </TouchableOpacity>
-      
+      {/* Botão Voltar */}
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{
+                  position: 'absolute',
+                  top: 20,
+                  left: 10,
+                  padding: 10,
+                  backgroundColor: '#007AFF',
+                  borderRadius: 5,
+                }}
+              >
+                <Text style={{ fontSize: 16, color: '#fff', fontWeight: 'bold' }}>⬅️ Voltar</Text>
+              </TouchableOpacity>
     </View>
   );
 };

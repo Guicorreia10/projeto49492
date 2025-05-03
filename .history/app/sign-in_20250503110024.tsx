@@ -24,7 +24,7 @@ const SignIn = () => {
     <View style={styles.container}>
       <Image
         source={require('../assets/images/onboarding.png')}
-        resizeMode="contain"
+        resizeMode="cover"
         style={styles.image}
       />
 
@@ -74,44 +74,61 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 450,
-    marginBottom: 30,
-    borderRadius: 20,
+    height: 600,
+    marginBottom: 40,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#e1e1e1",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "700",
-    color: "#08457E",
-    marginBottom: 20,
+    color: "#2F4F4F",
+    marginBottom: 25,
     textAlign: "center",
+    fontFamily: "AvenirNext-Bold",
   },
   input: {
-    backgroundColor: "#f5f5f5",
-    padding: 15,
-    borderRadius: 12,
+    backgroundColor: "#fff",
+    padding: 18,
+    borderRadius: 15,
     width: "100%",
-    marginBottom: 15,
+    marginBottom: 20,
     fontSize: 16,
-    borderColor: "#00796B",
-    borderWidth: 1,
+    borderColor: "#B0B0B0",
+    borderWidth: 1.5,
+    fontFamily: "AvenirNext-Regular",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
   },
   loginButton: {
     backgroundColor: "#4A90E2",
-    padding: 15,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 15,
     width: "100%",
-    marginBottom: 15,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   loginButtonText: {
     textAlign: "center",
     color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
+    fontFamily: "AvenirNext-Bold",
   },
   signupButton: {
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 1,
+    padding: 18,
+    borderRadius: 15,
+    borderWidth: 1.5,
     borderColor: "#4A90E2",
     backgroundColor: "transparent",
     width: "100%",
@@ -119,8 +136,9 @@ const styles = StyleSheet.create({
   signupButtonText: {
     textAlign: "center",
     color: "#4A90E2",
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
+    fontFamily: "AvenirNext-Bold",
   },
 });
 

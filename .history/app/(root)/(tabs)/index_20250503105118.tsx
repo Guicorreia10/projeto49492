@@ -1,0 +1,111 @@
+[{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2307",
+	"severity": 8,
+	"message": "Cannot find module '../../../lib/supabase' or its corresponding type declarations.",
+	"source": "ts",
+	"startLineNumber": 5,
+	"startColumn": 26,
+	"endLineNumber": 5,
+	"endColumn": 49
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2307",
+	"severity": 8,
+	"message": "Cannot find module '../../../constants/images' or its corresponding type declarations.",
+	"source": "ts",
+	"startLineNumber": 7,
+	"startColumn": 20,
+	"endLineNumber": 7,
+	"endColumn": 47
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "7006",
+	"severity": 8,
+	"message": "Parameter 'item' implicitly has an 'any' type.",
+	"source": "ts",
+	"startLineNumber": 43,
+	"startColumn": 44,
+	"endLineNumber": 43,
+	"endColumn": 48
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "7006",
+	"severity": 8,
+	"message": "Parameter 'item' implicitly has an 'any' type.",
+	"source": "ts",
+	"startLineNumber": 44,
+	"startColumn": 42,
+	"endLineNumber": 44,
+	"endColumn": 46
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2345",
+	"severity": 8,
+	"message": "Argument of type '{ id: number; text: string; completed: boolean; }' is not assignable to parameter of type 'SetStateAction<null>'.\n  Type '{ id: number; text: string; completed: boolean; }' provides no match for the signature '(prevState: null): null'.",
+	"source": "ts",
+	"startLineNumber": 111,
+	"startColumn": 27,
+	"endLineNumber": 111,
+	"endColumn": 59
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'id' does not exist on type 'never'.",
+	"source": "ts",
+	"startLineNumber": 165,
+	"startColumn": 37,
+	"endLineNumber": 165,
+	"endColumn": 39
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'id' does not exist on type 'never'.",
+	"source": "ts",
+	"startLineNumber": 166,
+	"startColumn": 63,
+	"endLineNumber": 166,
+	"endColumn": 65
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'completed' does not exist on type 'never'.",
+	"source": "ts",
+	"startLineNumber": 170,
+	"startColumn": 59,
+	"endLineNumber": 170,
+	"endColumn": 68
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'completed' does not exist on type 'never'.",
+	"source": "ts",
+	"startLineNumber": 175,
+	"startColumn": 36,
+	"endLineNumber": 175,
+	"endColumn": 45
+},{
+	"resource": "/c:/Users/Guilherme Correia/Desktop/projeto/app/(root)/(tabs)/manual-input/index.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'text' does not exist on type 'never'.",
+	"source": "ts",
+	"startLineNumber": 178,
+	"startColumn": 35,
+	"endLineNumber": 178,
+	"endColumn": 39
+}]

@@ -37,7 +37,6 @@ const ManualInputScreen = () => {
       >
         <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Dados do Sono</Text>
       </TouchableOpacity>
-      
     </View>
   );
 };

@@ -7,7 +7,6 @@ import {
   Modal,
   Alert,
   TouchableOpacity,
-  ScrollView, // Adicionando o ScrollView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
@@ -135,10 +134,10 @@ const Explore = () => {
         </body>
       </html>
     `;
-
+  
     try {
       const { uri } = await Print.printToFileAsync({ html });
-
+  
       Alert.alert(
         "Exportar PDF",
         "O que pretende fazer com o PDF?",
@@ -179,29 +178,27 @@ const Explore = () => {
         <Text style={styles.textoBotao}>Exportar registos em PDF</Text>
       </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Calendar
-          onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
-          markedDates={{
-            [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
-          }}
-          style={styles.calendar}
-          theme={{
-            selectedDayBackgroundColor: "#4A90E2",
-            selectedDayTextColor: "#fff",
-            todayTextColor: "#4A90E2",
-            dayTextColor: "#000",
-            arrowColor: "#4A90E2",
-          }}
-        />
+      <Calendar
+        onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
+        markedDates={{
+          [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
+        }}
+        style={styles.calendar}
+        theme={{
+          selectedDayBackgroundColor: "#4A90E2",
+          selectedDayTextColor: "#fff",
+          todayTextColor: "#4A90E2",
+          dayTextColor: "#000",
+          arrowColor: "#4A90E2",
+        }}
+      />
 
-        <FlatList
-          data={registrosFiltrados}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={<Text style={styles.emptyText}>Sem registos para este dia.</Text>}
-        />
-      </ScrollView>
+      <FlatList
+        data={registrosFiltrados}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={<Text style={styles.emptyText}>Sem registos para este dia.</Text>}
+      />
 
       <Modal
         animationType="slide"
@@ -273,10 +270,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 16,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    paddingBottom: 20, // Garantir espaço no fundo para conteúdo extra
   },
 });
 

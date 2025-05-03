@@ -1,5 +1,4 @@
-import React, { useState,
-   useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -30,7 +29,7 @@ export default function Index() {
   const [lastReset, setLastReset] = useState<Date | null>(null);
 
   useEffect(() => {
-    const fetchLatestData = async () => {
+    const fetchData = async () => {
       try {
         const { data, error } = await supabase
           .from("dados_usuario")
@@ -45,39 +44,36 @@ export default function Index() {
         }
 
         if (data && data.length > 0) {
-          const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
+          const {
+            sono = 0,
+            qualidade_sono = 0,
+            dificuldade_ao_dormir = "Sim",
+            uso_dispositivos = "Sim",
+            glicose = 0,
+          } = data[0];
 
-          // Avaliação do sono
-          if (
-            sono !== null &&
-            qualidade_sono !== null &&
-            dificuldade_ao_dormir !== null &&
-            uso_dispositivos !== null
-          ) {
-            const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
-            const qualityScore = qualidade_sono * 0.3;
-            const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
-            const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
-            const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
-            setSleepEvaluation(Number(finalScore.toFixed(1)));
+          const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
+          const qualityScore = qualidade_sono * 0.3;
+          const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
+          const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
 
-            if (finalScore <= 5) {
-              setSleepMessage("Tente dormir melhor hoje!");
-            } else {
-              setSleepMessage("O seu sono está ótimo!");
-            }
+          const finalSleepScore = hoursScore + qualityScore + difficultyScore + deviceScore;
+          setSleepEvaluation(Number(finalSleepScore.toFixed(1)));
+
+          if (finalSleepScore <= 5) {
+            setSleepMessage("Tente dormir melhor hoje!");
+          } else {
+            setSleepMessage("O seu sono está ótimo!");
           }
 
-          // Avaliação da glicose
-          if (glicose !== null) {
-            setGlucoseValue(glicose);
-            if (glicose <= 70) {
-              setGlucoseMessage("Atenção: glicose baixa.");
-            } else if (glicose <= 140) {
-              setGlucoseMessage("Glicose dentro do normal!");
-            } else {
-              setGlucoseMessage("Tenha cuidado: glicose elevada.");
-            }
+          setGlucoseValue(glicose);
+
+          if (glicose <= 70) {
+            setGlucoseMessage("Atenção: glicose baixa.");
+          } else if (glicose <= 140) {
+            setGlucoseMessage("Glicose dentro do normal!");
+          } else {
+            setGlucoseMessage("Tenha cuidado: glicose elevada.");
           }
         }
       } catch (err) {
@@ -86,12 +82,15 @@ export default function Index() {
       }
     };
 
-    fetchLatestData();
+    fetchData();
     resetChallengesIfNecessary();
 
-    const intervalId = setInterval(fetchLatestData, 10000);
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 10000);
+
     return () => clearInterval(intervalId);
-  }, []);
+  }, [lastReset]);
 
   const resetChallengesIfNecessary = () => {
     const now = new Date();
@@ -103,16 +102,13 @@ export default function Index() {
 
   const toggleChallenge = (id: number) => {
     setChallenges((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, completed: !c.completed } : c
-      )
+      prev.map((c) => (c.id === id ? { ...c, completed: !c.completed } : c))
     );
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image source={images.avatar} style={styles.avatar} />
@@ -124,7 +120,6 @@ export default function Index() {
           <Image source={icons.bell} style={styles.bellIcon} />
         </View>
 
-        {/* Resumo do Sono */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Resumo do Sono</Text>
           <Text style={styles.cardValue}>
@@ -133,7 +128,6 @@ export default function Index() {
           <Text style={styles.cardText}>{sleepMessage}</Text>
         </View>
 
-        {/* Glicose */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Glicose Atual</Text>
           <Text style={styles.cardValue}>
@@ -142,34 +136,26 @@ export default function Index() {
           <Text style={styles.cardText}>{glucoseMessage}</Text>
         </View>
 
-        {/* Desafios */}
         <Text style={styles.sectionTitle}>Desafios de Hoje</Text>
         <View style={styles.challengeBox}>
-          {challenges.map((c) => (
+          {challenges.map((challenge) => (
             <TouchableOpacity
-              key={c.id}
-              onPress={() => toggleChallenge(c.id)}
+              key={challenge.id}
+              onPress={() => toggleChallenge(challenge.id)}
               style={styles.challengeItem}
             >
               <View
-                style={[
-                  styles.checkbox,
-                  c.completed && styles.checkboxCompleted,
-                ]}
+                style={[styles.checkbox, challenge.completed && styles.checkboxCompleted]}
               />
               <Text
-                style={[
-                  styles.challengeText,
-                  c.completed && styles.challengeTextCompleted,
-                ]}
+                style={[styles.challengeText, challenge.completed && styles.challengeTextCompleted]}
               >
-                {c.text}
+                {challenge.text}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Gráfico */}
         <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
         <LineChart
           data={{
@@ -212,7 +198,12 @@ export default function Index() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   headerLeft: { flexDirection: "row", alignItems: "center" },
   avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 10 },
   greeting: { fontSize: 18, fontWeight: "600", color: "#08457E" },

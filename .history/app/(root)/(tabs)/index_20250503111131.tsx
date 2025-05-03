@@ -1,20 +1,12 @@
-import React, { useState,
-   useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "react-native";
 import { supabase } from "../../../lib/supabase";
 import icons from "@/constants/icons";
 import images from "../../../constants/images";
 import { LineChart } from "react-native-chart-kit";
+import { Dimensions } from "react-native";
 
 export default function Index() {
   const [sleepEvaluation, setSleepEvaluation] = useState<number | null>(null);
@@ -27,10 +19,10 @@ export default function Index() {
     { id: 3, text: "🚶‍♂️ Caminhada de 10 minutos", completed: false },
     { id: 4, text: "🍎 Comer pelo menos 1 fruta hoje", completed: false },
   ]);
-  const [lastReset, setLastReset] = useState<Date | null>(null);
+  const [lastReset, setLastReset] = useState<Date | null>(null); // Última data de redefinição dos desafios
 
   useEffect(() => {
-    const fetchLatestData = async () => {
+    const fetchData = async () => {
       try {
         const { data, error } = await supabase
           .from("dados_usuario")
@@ -46,38 +38,27 @@ export default function Index() {
 
         if (data && data.length > 0) {
           const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
+          setGlucoseValue(glicose); // Atualiza glicose com o dado mais recente
 
-          // Avaliação do sono
-          if (
-            sono !== null &&
-            qualidade_sono !== null &&
-            dificuldade_ao_dormir !== null &&
-            uso_dispositivos !== null
-          ) {
-            const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
-            const qualityScore = qualidade_sono * 0.3;
-            const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
-            const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
-            const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
-            setSleepEvaluation(Number(finalScore.toFixed(1)));
+          const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
+          const qualityScore = qualidade_sono * 0.3;
+          const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
+          const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
+          const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
+          setSleepEvaluation(Number(finalScore.toFixed(1)));
 
-            if (finalScore <= 5) {
-              setSleepMessage("Tente dormir melhor hoje!");
-            } else {
-              setSleepMessage("O seu sono está ótimo!");
-            }
+          if (finalScore <= 5) {
+            setSleepMessage("Tente dormir melhor hoje!");
+          } else {
+            setSleepMessage("O seu sono está ótimo!");
           }
 
-          // Avaliação da glicose
-          if (glicose !== null) {
-            setGlucoseValue(glicose);
-            if (glicose <= 70) {
-              setGlucoseMessage("Atenção: glicose baixa.");
-            } else if (glicose <= 140) {
-              setGlucoseMessage("Glicose dentro do normal!");
-            } else {
-              setGlucoseMessage("Tenha cuidado: glicose elevada.");
-            }
+          if (glicose <= 70) {
+            setGlucoseMessage("Atenção: glicose baixa.");
+          } else if (glicose <= 140) {
+            setGlucoseMessage("Glicose dentro do normal!");
+          } else {
+            setGlucoseMessage("Tenha cuidado: glicose elevada.");
           }
         }
       } catch (err) {
@@ -86,25 +67,34 @@ export default function Index() {
       }
     };
 
-    fetchLatestData();
+    fetchData();
     resetChallengesIfNecessary();
 
-    const intervalId = setInterval(fetchLatestData, 10000);
-    return () => clearInterval(intervalId);
-  }, []);
+    // Atualiza os dados a cada 10 segundos
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 10000);
+
+    return () => clearInterval(intervalId); // Limpar o intervalo quando o componente for desmontado
+  }, [lastReset]);
 
   const resetChallengesIfNecessary = () => {
     const now = new Date();
     if (!lastReset || now.getDate() !== lastReset.getDate()) {
-      setChallenges((prev) => prev.map((c) => ({ ...c, completed: false })));
+      // Reinicia os desafios se passou mais de 24 horas ou for um novo dia
+      setChallenges((prevChallenges) =>
+        prevChallenges.map((challenge) => ({ ...challenge, completed: false }))
+      );
       setLastReset(now);
     }
   };
 
   const toggleChallenge = (id: number) => {
-    setChallenges((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, completed: !c.completed } : c
+    setChallenges((prevChallenges) =>
+      prevChallenges.map((challenge) =>
+        challenge.id === id
+          ? { ...challenge, completed: !challenge.completed }
+          : challenge
       )
     );
   };
@@ -124,7 +114,7 @@ export default function Index() {
           <Image source={icons.bell} style={styles.bellIcon} />
         </View>
 
-        {/* Resumo do Sono */}
+        {/* Resumo do Dia */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Resumo do Sono</Text>
           <Text style={styles.cardValue}>
@@ -133,7 +123,6 @@ export default function Index() {
           <Text style={styles.cardText}>{sleepMessage}</Text>
         </View>
 
-        {/* Glicose */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Glicose Atual</Text>
           <Text style={styles.cardValue}>
@@ -145,43 +134,43 @@ export default function Index() {
         {/* Desafios */}
         <Text style={styles.sectionTitle}>Desafios de Hoje</Text>
         <View style={styles.challengeBox}>
-          {challenges.map((c) => (
+          {challenges.map((challenge) => (
             <TouchableOpacity
-              key={c.id}
-              onPress={() => toggleChallenge(c.id)}
+              key={challenge.id}
+              onPress={() => toggleChallenge(challenge.id)}
               style={styles.challengeItem}
             >
               <View
                 style={[
                   styles.checkbox,
-                  c.completed && styles.checkboxCompleted,
+                  challenge.completed && styles.checkboxCompleted,
                 ]}
               />
               <Text
                 style={[
                   styles.challengeText,
-                  c.completed && styles.challengeTextCompleted,
+                  challenge.completed && styles.challengeTextCompleted,
                 ]}
               >
-                {c.text}
+                {challenge.text}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Gráfico */}
+        {/* Gráfico de Relação */}
         <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
         <LineChart
           data={{
             labels: ["Hoje"],
             datasets: [
               {
-                data: [sleepEvaluation ?? 0],
+                data: [sleepEvaluation ?? 0], // Garantir que não seja null
                 color: () => "#4A90E2",
                 strokeWidth: 2,
               },
               {
-                data: [glucoseValue ?? 0],
+                data: [glucoseValue ?? 0], // Garantir que não seja null
                 color: () => "#E94E77",
                 strokeWidth: 2,
               },
@@ -209,30 +198,21 @@ export default function Index() {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
   headerLeft: { flexDirection: "row", alignItems: "center" },
   avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 10 },
-  greeting: { fontSize: 18, fontWeight: "600", color: "#08457E" },
+  greeting: { fontSize: 18, fontFamily: "Rubik-Medium", color: "#08457E" },
   subGreeting: { fontSize: 14, color: "#888" },
   bellIcon: { width: 24, height: 24 },
-  card: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  cardTitle: { fontSize: 18, fontWeight: "700", color: "#08457E", marginBottom: 5 },
-  cardValue: { fontSize: 36, fontWeight: "700", color: "#007AFF" },
+  card: { backgroundColor: "#fff", padding: 20, borderRadius: 16, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.1, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 5 },
+  cardTitle: { fontSize: 18, fontFamily: "Rubik-Bold", color: "#08457E", marginBottom: 5 },
+  cardValue: { fontSize: 36, fontFamily: "Rubik-Bold", color: "#007AFF" },
   cardText: { fontSize: 14, color: "#666", marginTop: 5 },
-  sectionTitle: { fontSize: 20, fontWeight: "700", color: "#08457E", marginBottom: 10, marginTop: 20 },
+  sectionTitle: { fontSize: 20, fontFamily: "Rubik-Bold", color: "#08457E", marginBottom: 10, marginTop: 20 },
   challengeBox: { backgroundColor: "#E0F7FA", padding: 15, borderRadius: 12 },
   challengeItem: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   checkbox: {
