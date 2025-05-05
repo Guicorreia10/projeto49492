@@ -7,13 +7,14 @@ import {
   Modal,
   Alert,
   TouchableOpacity,
+  ScrollView, // Adicionando o ScrollView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../../lib/supabase";
 import { Calendar } from "react-native-calendars";
 import * as Print from "expo-print";
-import * as Sharing from "expo-sharing";
+import * as Sharing from "expo-sharing"; // IMPORTAÇÃO CORRETA
 
 interface Registo {
   id: string;
@@ -73,11 +74,11 @@ const Explore = () => {
   const renderItem = ({ item }: { item: Registo }) => {
     const iconComponent =
       item.tipo === "glicose" ? (
-        <View style={[styles.iconBackground, { backgroundColor: "blue" }]}> 
+        <View style={[styles.iconBackground, { backgroundColor: "blue" }]}>
           <MaterialCommunityIcons name="water-opacity" size={16} color="white" />
         </View>
       ) : (
-        <View style={[styles.iconBackground, { backgroundColor: "purple" }]}> 
+        <View style={[styles.iconBackground, { backgroundColor: "purple" }]}>
           <Ionicons name="bed" size={16} color="white" />
         </View>
       );
@@ -178,29 +179,29 @@ const Explore = () => {
         <Text style={styles.textoBotao}>Exportar registos em PDF</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={registrosFiltrados}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.emptyText}>Sem registos para este dia.</Text>}
-        ListHeaderComponent={
-          <Calendar
-            onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
-            markedDates={{
-              [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
-            }}
-            style={styles.calendar}
-            theme={{
-              selectedDayBackgroundColor: "#4A90E2",
-              selectedDayTextColor: "#fff",
-              todayTextColor: "#4A90E2",
-              dayTextColor: "#000",
-              arrowColor: "#4A90E2",
-            }}
-          />
-        }
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Calendar
+          onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
+          markedDates={{
+            [selectedDate]: { selected: true, selectedColor: "#4A90E2" },
+          }}
+          style={styles.calendar}
+          theme={{
+            selectedDayBackgroundColor: "#4A90E2",
+            selectedDayTextColor: "#fff",
+            todayTextColor: "#4A90E2",
+            dayTextColor: "#000",
+            arrowColor: "#4A90E2",
+          }}
+        />
+
+        <FlatList
+          data={registrosFiltrados}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={<Text style={styles.emptyText}>Sem registos para este dia.</Text>}
+        />
+      </ScrollView>
 
       <Modal
         animationType="slide"
@@ -272,6 +273,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 16,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 20, // Garantir espaço no fundo para conteúdo extra
   },
 });
 

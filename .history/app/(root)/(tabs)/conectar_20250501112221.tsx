@@ -33,7 +33,7 @@ const Conectar = () => {
       const connected = await manager.connectToDevice(device.id);
       await connected.discoverAllServicesAndCharacteristics();
 
-      
+      // Simulação
       const glicose = Math.floor(80 + Math.random() * 40);
       const sono = parseFloat((Math.random() * 8).toFixed(2));
 

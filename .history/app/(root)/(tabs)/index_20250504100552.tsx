@@ -21,18 +21,9 @@ export default function Index() {
   const [glucoseValue, setGlucoseValue] = useState<number | null>(null);
   const [glucoseMessage, setGlucoseMessage] = useState<string>("A carregar...");
   const [challenges, setChallenges] = useState([
-    { id: 2, text: "💧 Beber 8 copos de água hoje", completed: false },
+    { id: 1, text: "🌙 Dormir 30 minutos mais cedo", completed: false },
   ]);
   const [lastReset, setLastReset] = useState<Date | null>(null);
-
-  const dias = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return `${d.getDate()}/${d.getMonth() + 1}`;
-  });
-
-  const dadosSono = [6.5, 7.0, 4.8, 8.2, 7.5, 6.9, sleepEvaluation ?? 0];
-  const dadosGlicose = [130, 120, 140, 100, 110, 135, glucoseValue ?? 0];
 
   useEffect(() => {
     const fetchLatestData = async () => {
@@ -52,6 +43,7 @@ export default function Index() {
         if (data && data.length > 0) {
           const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
 
+          // Avaliação do sono
           if (
             sono !== null &&
             qualidade_sono !== null &&
@@ -65,14 +57,23 @@ export default function Index() {
             const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
             setSleepEvaluation(Number(finalScore.toFixed(1)));
 
-            setSleepMessage(finalScore <= 5 ? "Tente dormir melhor hoje!" : "O seu sono está ótimo!");
+            if (finalScore <= 5) {
+              setSleepMessage("Tente dormir melhor hoje!");
+            } else {
+              setSleepMessage("O seu sono está ótimo!");
+            }
           }
 
+          // Avaliação da glicose
           if (glicose !== null) {
             setGlucoseValue(glicose);
-            if (glicose <= 70) setGlucoseMessage("Atenção: glicose baixa.");
-            else if (glicose <= 140) setGlucoseMessage("Glicose dentro do normal!");
-            else setGlucoseMessage("Tenha cuidado: glicose elevada.");
+            if (glicose <= 70) {
+              setGlucoseMessage("Atenção: glicose baixa.");
+            } else if (glicose <= 140) {
+              setGlucoseMessage("Glicose dentro do normal!");
+            } else {
+              setGlucoseMessage("Tenha cuidado: glicose elevada.");
+            }
           }
         }
       } catch (err) {
@@ -98,13 +99,16 @@ export default function Index() {
 
   const toggleChallenge = (id: number) => {
     setChallenges((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, completed: !c.completed } : c))
+      prev.map((c) =>
+        c.id === id ? { ...c, completed: !c.completed } : c
+      )
     );
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image source={images.avatar} style={styles.avatar} />
@@ -116,6 +120,7 @@ export default function Index() {
           <Image source={icons.bell} style={styles.bellIcon} />
         </View>
 
+        {/* Resumo do Sono */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Resumo do Sono</Text>
           <Text style={styles.cardValue}>
@@ -124,6 +129,7 @@ export default function Index() {
           <Text style={styles.cardText}>{sleepMessage}</Text>
         </View>
 
+        {/* Glicose */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Glicose Atual</Text>
           <Text style={styles.cardValue}>
@@ -132,6 +138,7 @@ export default function Index() {
           <Text style={styles.cardText}>{glucoseMessage}</Text>
         </View>
 
+        {/* Desafio do Dia */}
         <Text style={styles.sectionTitle}>Desafio do Dia</Text>
         {challenges.map((c) => (
           <View key={c.id} style={styles.challengeCard}>
@@ -140,10 +147,16 @@ export default function Index() {
               <Text style={styles.challengeTitle}>{c.text.replace(/^.{2}\s/, "")}</Text>
               <TouchableOpacity
                 onPress={() => toggleChallenge(c.id)}
-                style={[styles.challengeButton, c.completed && styles.challengeButtonCompleted]}
+                style={[
+                  styles.challengeButton,
+                  c.completed && styles.challengeButtonCompleted,
+                ]}
               >
                 <Text
-                  style={[styles.challengeButtonText, c.completed && styles.challengeButtonTextCompleted]}
+                  style={[
+                    styles.challengeButtonText,
+                    c.completed && styles.challengeButtonTextCompleted,
+                  ]}
                 >
                   {c.completed ? "Concluído ✅" : "Concluir"}
                 </Text>
@@ -152,18 +165,19 @@ export default function Index() {
           </View>
         ))}
 
+        {/* Gráfico */}
         <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
         <LineChart
           data={{
-            labels: dias,
+            labels: ["Hoje"],
             datasets: [
               {
-                data: dadosSono,
+                data: [sleepEvaluation ?? 0],
                 color: () => "#4A90E2",
                 strokeWidth: 2,
               },
               {
-                data: dadosGlicose,
+                data: [glucoseValue ?? 0],
                 color: () => "#E94E77",
                 strokeWidth: 2,
               },
@@ -244,7 +258,10 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 20,
   },
-  challengeIcon: { fontSize: 36, marginRight: 16 },
+  challengeIcon: {
+    fontSize: 36,
+    marginRight: 16,
+  },
   challengeTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -258,7 +275,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: "flex-start",
   },
-  challengeButtonCompleted: { backgroundColor: "#4CAF50" },
-  challengeButtonText: { color: "#fff", fontSize: 14 },
-  challengeButtonTextCompleted: { color: "#e8f5e9" },
+  challengeButtonCompleted: {
+    backgroundColor: "#4CAF50",
+  },
+  challengeButtonText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  challengeButtonTextCompleted: {
+    color: "#e8f5e9",
+  },
 });

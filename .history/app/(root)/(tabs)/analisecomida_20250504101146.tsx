@@ -20,11 +20,11 @@ import {
 } from '../../utils/utils';
 
 const AnaliseComida: React.FC = () => {
-  const [images, setImages] = useState<string[]>([]);  
+  const [images, setImages] = useState<string[]>([]);  // Array para armazenar múltiplas imagens
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [nutritionalData, setNutritionalData] = useState<any | null>(null);
   const [quantity, setQuantity] = useState('100');
-  const [mealData, setMealData] = useState<any[]>([]);  
+  const [mealData, setMealData] = useState<any[]>([]);  // Array para armazenar os alimentos da refeição
 
   const pickImage = async () => {
     setNutritionalData(null);
@@ -35,7 +35,7 @@ const AnaliseComida: React.FC = () => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      setImages((prevImages) => [...prevImages, uri]);  
+      setImages((prevImages) => [...prevImages, uri]);  // Adiciona a nova imagem ao array
     }
   };
 
@@ -58,7 +58,7 @@ const AnaliseComida: React.FC = () => {
       const glycemicImpact = calculateGlycemicImpact(nutrition);
       const foodData = { ...nutrition, glycemicImpact, name: foodName, quantity: Number(quantity) };
 
-      setMealData((prevMealData) => [...prevMealData, foodData]);
+      setMealData((prevMealData) => [...prevMealData, foodData]);  // Adiciona o alimento à refeição
     } catch (error) {
       console.error(error);
       Alert.alert('Erro', 'Falha ao analisar a imagem. Tente novamente.');
@@ -75,7 +75,7 @@ const AnaliseComida: React.FC = () => {
     mealData.forEach(item => {
       totalCalories += item.calories;
       totalCarbs += item.carbs;
-      totalGlycemicImpact += item.glycemicImpact.value;  
+      totalGlycemicImpact += item.glycemicImpact.value;  // Exemplo de como somar o impacto glicêmico
     });
 
     return { totalCalories, totalCarbs, totalGlycemicImpact };
