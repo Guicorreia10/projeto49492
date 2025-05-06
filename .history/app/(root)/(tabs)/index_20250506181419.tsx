@@ -11,11 +11,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../../lib/supabase";
+import { useRouter } from "expo-router";
 import icons from "@/constants/icons";
 import images from "../../../constants/images";
 import { LineChart } from "react-native-chart-kit";
 
 export default function Index() {
+  const router = useRouter();
+  const [sessionChecked, setSessionChecked] = useState(false);
+
   const [sleepEvaluation, setSleepEvaluation] = useState<number | null>(null);
   const [sleepMessage, setSleepMessage] = useState<string>("A carregar...");
   const [glucoseValue, setGlucoseValue] = useState<number | null>(null);
@@ -35,6 +39,20 @@ export default function Index() {
   const dadosGlicose = [130, 120, 140, 100, 110, 135, glucoseValue ?? 0];
 
   useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        router.replace("/sign-in");
+      } else {
+        setSessionChecked(true);
+      }
+    };
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (!sessionChecked) return;
+
     const fetchLatestData = async () => {
       try {
         const { data: authData, error: authError } = await supabase.auth.getUser();
@@ -50,7 +68,7 @@ export default function Index() {
           .limit(1);
 
         if (error) {
-          console.error("Erro ao buscar dados:", error);
+          console.error("Erro ao procurar dados:", error);
           Alert.alert("Erro", "Não foi possível carregar os dados.");
           return;
         }
@@ -87,17 +105,46 @@ export default function Index() {
     };
 
     fetchLatestData();
-    const intervalId = setInterval(fetchLatestData, 10000);
-    return () => clearInterval(intervalId);
-  }, []);
 
-  const resetChallengesIfNecessary = () => {
-    const now = new Date();
-    if (!lastReset || now.getDate() !== lastReset.getDate()) {
-      setChallenges((prev) => prev.map((c) => ({ ...c, completed: false })));
-      setLastReset(now);
-    }
-  };
+    const channel = supabase
+      .channel("health-data")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "dados_usuario",
+        },
+        (payload) => {
+          const d = payload.new;
+          if (d.glicose !== undefined) {
+            setGlucoseValue(d.glicose);
+            if (d.glicose <= 70) setGlucoseMessage("Atenção: glicose baixa.");
+            else if (d.glicose <= 140) setGlucoseMessage("Glicose dentro do normal!");
+            else setGlucoseMessage("Tenha cuidado: glicose elevada.");
+          }
+          if (
+            d.sono !== undefined &&
+            d.qualidade_sono !== undefined &&
+            d.dificuldade_ao_dormir !== undefined &&
+            d.uso_dispositivos !== undefined
+          ) {
+            const hoursScore = Math.min((d.sono / 8) * 10, 10) * 0.4;
+            const qualityScore = d.qualidade_sono * 0.3;
+            const difficultyScore = d.dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
+            const deviceScore = d.uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
+            const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
+            setSleepEvaluation(Number(finalScore.toFixed(1)));
+            setSleepMessage(finalScore <= 5 ? "Tente dormir melhor hoje!" : "O seu sono está ótimo!");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionChecked]);
 
   const toggleChallenge = (id: number) => {
     setChallenges((prev) =>
@@ -105,9 +152,14 @@ export default function Index() {
     );
   };
 
+  if (!sessionChecked) {
+    return <View style={{ flex: 1, backgroundColor: "#F0F8FF" }} />;
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Cabeçalho e cartões */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image source={images.avatar} style={styles.avatar} />
@@ -135,6 +187,7 @@ export default function Index() {
           <Text style={styles.cardText}>{glucoseMessage}</Text>
         </View>
 
+        {/* Desafios */}
         <Text style={styles.sectionTitle}>Desafio do Dia</Text>
         {challenges.map((c) => (
           <View key={c.id} style={styles.challengeCard}>
@@ -155,6 +208,7 @@ export default function Index() {
           </View>
         ))}
 
+        {/* Gráfico */}
         <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
         <LineChart
           data={{
@@ -193,6 +247,7 @@ export default function Index() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },

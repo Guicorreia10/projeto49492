@@ -1,4 +1,4 @@
-// Ecrã de perfil com atualização da foto imediatamente após upload (solução 1)
+// Ecrã de perfil com edição da foto, upload, atualização em tempo real e resolução de cache
 
 import React, { useState, useEffect } from "react";
 import {
@@ -133,8 +133,6 @@ export default function Profile() {
         Alert.alert("Erro", "Imagem enviada mas não foi possível guardar na base de dados.");
       } else {
         console.log("✅ Foto carregada com sucesso:", publicUrl.publicUrl);
-        // 👇 Força atualização imediata
-        setAvatarUrl(`${publicUrl.publicUrl}?t=${Date.now()}`);
       }
     }
   };
@@ -161,7 +159,7 @@ export default function Profile() {
           <View className="relative">
             <Image
               source={{
-                uri: avatarUrl ? `${avatarUrl}` : Image.resolveAssetSource(images.avatar).uri,
+                uri: avatarUrl ? `${avatarUrl}?t=${Date.now()}` : Image.resolveAssetSource(images.avatar).uri,
               }}
               className="w-32 h-32 rounded-full border-[3px] border-[#1E3A8A]"
             />

@@ -1,4 +1,4 @@
-// Ecrã de perfil com atualização da foto imediatamente após upload (solução 1)
+// Ecrã de perfil com edição da foto, upload e atualização em tempo real via Supabase
 
 import React, { useState, useEffect } from "react";
 import {
@@ -59,6 +59,7 @@ export default function Profile() {
       if (data?.nome_completo) setUsername(data.nome_completo);
       if (data?.foto_url) setAvatarUrl(data.foto_url);
 
+      // Subscrição em tempo real para atualização da foto
       const channel = supabase
         .channel("profile-updates")
         .on(
@@ -133,8 +134,6 @@ export default function Profile() {
         Alert.alert("Erro", "Imagem enviada mas não foi possível guardar na base de dados.");
       } else {
         console.log("✅ Foto carregada com sucesso:", publicUrl.publicUrl);
-        // 👇 Força atualização imediata
-        setAvatarUrl(`${publicUrl.publicUrl}?t=${Date.now()}`);
       }
     }
   };
@@ -150,6 +149,7 @@ export default function Profile() {
   return (
     <SafeAreaView className="flex-1 bg-[#F9FAFB]">
       <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
+        {/* Cabeçalho */}
         <View className="px-6 pt-8">
           <Text className="text-[26px] font-semibold text-neutral-900 mb-1 tracking-tight">
             Bem-vindo, {username?.split(" ")[0] || "Utilizador"} 👋
@@ -157,12 +157,11 @@ export default function Profile() {
           <Text className="text-sm text-neutral-500">Gerir conta e preferências</Text>
         </View>
 
+        {/* Avatar com edição */}
         <View className="items-center mt-8 mb-4">
           <View className="relative">
             <Image
-              source={{
-                uri: avatarUrl ? `${avatarUrl}` : Image.resolveAssetSource(images.avatar).uri,
-              }}
+              source={{ uri: avatarUrl || Image.resolveAssetSource(images.avatar).uri }}
               className="w-32 h-32 rounded-full border-[3px] border-[#1E3A8A]"
             />
             <TouchableOpacity
@@ -175,6 +174,7 @@ export default function Profile() {
           <Text className="text-lg font-medium mt-3 text-neutral-800">{username}</Text>
         </View>
 
+        {/* Secções */}
         <View className="space-y-6 px-6 mt-4">
           <Section title="Conta">
             <MenuItem icon={icons.calendar} label="Histórico" onPress={() => router.push("/explore")} />

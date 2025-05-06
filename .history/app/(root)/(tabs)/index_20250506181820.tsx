@@ -11,19 +11,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../../lib/supabase";
+import { useRouter } from "expo-router";
 import icons from "@/constants/icons";
 import images from "../../../constants/images";
 import { LineChart } from "react-native-chart-kit";
 
 export default function Index() {
+  const router = useRouter();
+  const [sessionChecked, setSessionChecked] = useState(false);
+
   const [sleepEvaluation, setSleepEvaluation] = useState<number | null>(null);
   const [sleepMessage, setSleepMessage] = useState<string>("A carregar...");
   const [glucoseValue, setGlucoseValue] = useState<number | null>(null);
   const [glucoseMessage, setGlucoseMessage] = useState<string>("A carregar...");
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [challenges, setChallenges] = useState([
     { id: 2, text: "💧 Beber 8 copos de água hoje", completed: false },
   ]);
-  const [lastReset, setLastReset] = useState<Date | null>(null);
 
   const dias = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -35,75 +39,105 @@ export default function Index() {
   const dadosGlicose = [130, 120, 140, 100, 110, 135, glucoseValue ?? 0];
 
   useEffect(() => {
-    const fetchLatestData = async () => {
-      try {
-        const { data: authData, error: authError } = await supabase.auth.getUser();
-        if (authError || !authData?.user) throw authError;
-
-        const userId = authData.user.id;
-
-        const { data, error } = await supabase
-          .from("dados_usuario")
-          .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (error) {
-          console.error("Erro ao buscar dados:", error);
-          Alert.alert("Erro", "Não foi possível carregar os dados.");
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
-
-          if (
-            sono !== null &&
-            qualidade_sono !== null &&
-            dificuldade_ao_dormir !== null &&
-            uso_dispositivos !== null
-          ) {
-            const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
-            const qualityScore = qualidade_sono * 0.3;
-            const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
-            const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
-            const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
-            setSleepEvaluation(Number(finalScore.toFixed(1)));
-            setSleepMessage(finalScore <= 5 ? "Tente dormir melhor hoje!" : "O seu sono está ótimo!");
-          }
-
-          if (glicose !== null) {
-            setGlucoseValue(glicose);
-            if (glicose <= 70) setGlucoseMessage("Atenção: glicose baixa.");
-            else if (glicose <= 140) setGlucoseMessage("Glicose dentro do normal!");
-            else setGlucoseMessage("Tenha cuidado: glicose elevada.");
-          }
-        }
-      } catch (err) {
-        console.error("Erro inesperado:", err);
-        Alert.alert("Erro", "Erro ao carregar dados.");
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        router.replace("/sign-in");
+      } else {
+        setSessionChecked(true);
       }
     };
-
-    fetchLatestData();
-    const intervalId = setInterval(fetchLatestData, 10000);
-    return () => clearInterval(intervalId);
+    checkSession();
   }, []);
 
-  const resetChallengesIfNecessary = () => {
-    const now = new Date();
-    if (!lastReset || now.getDate() !== lastReset.getDate()) {
-      setChallenges((prev) => prev.map((c) => ({ ...c, completed: false })));
-      setLastReset(now);
+  const fetchLatestData = async () => {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user) throw authError;
+
+      const userId = authData.user.id;
+
+      const { data, error } = await supabase
+        .from("dados_usuario")
+        .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error("Erro ao procurar dados:", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados.");
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose, created_at } = data[0];
+
+        const dataHora = new Date(created_at);
+        setLastUpdate(`${dataHora.toLocaleDateString()} às ${dataHora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+
+        if (
+          sono !== null &&
+          qualidade_sono !== null &&
+          dificuldade_ao_dormir !== null &&
+          uso_dispositivos !== null
+        ) {
+          const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
+          const qualityScore = qualidade_sono * 0.3;
+          const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
+          const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
+          const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
+          setSleepEvaluation(Number(finalScore.toFixed(1)));
+          setSleepMessage(finalScore <= 5 ? "Tente dormir melhor hoje!" : "O seu sono está ótimo!");
+        }
+
+        if (glicose !== null) {
+          setGlucoseValue(glicose);
+          if (glicose <= 70) setGlucoseMessage("Atenção: glicose baixa.");
+          else if (glicose <= 140) setGlucoseMessage("Glicose dentro do normal!");
+          else setGlucoseMessage("Tenha cuidado: glicose elevada.");
+        }
+      }
+    } catch (err) {
+      console.error("Erro inesperado:", err);
+      Alert.alert("Erro", "Erro ao carregar dados.");
     }
   };
+
+  useEffect(() => {
+    if (!sessionChecked) return;
+
+    fetchLatestData();
+
+    const channel = supabase
+      .channel("health-data")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "dados_usuario",
+        },
+        () => {
+          fetchLatestData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionChecked]);
 
   const toggleChallenge = (id: number) => {
     setChallenges((prev) =>
       prev.map((c) => (c.id === id ? { ...c, completed: !c.completed } : c))
     );
   };
+
+  if (!sessionChecked) {
+    return <View style={{ flex: 1, backgroundColor: "#F0F8FF" }} />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -134,6 +168,12 @@ export default function Index() {
           </Text>
           <Text style={styles.cardText}>{glucoseMessage}</Text>
         </View>
+
+        {lastUpdate && (
+          <Text style={{ textAlign: "center", color: "#666", marginTop: -10, marginBottom: 10 }}>
+            Última atualização: {lastUpdate}
+          </Text>
+        )}
 
         <Text style={styles.sectionTitle}>Desafio do Dia</Text>
         {challenges.map((c) => (
@@ -193,6 +233,7 @@ export default function Index() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },

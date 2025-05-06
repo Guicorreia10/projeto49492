@@ -1,4 +1,4 @@
-// Ecrã de perfil com atualização da foto imediatamente após upload (solução 1)
+// Ecrã de perfil com edição da foto e upload para Supabase
 
 import React, { useState, useEffect } from "react";
 import {
@@ -46,42 +46,19 @@ export default function Profile() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) return;
 
-      const uid = auth.user.id;
-      setUserId(uid);
+      setUserId(auth.user.id);
 
       const { data } = await supabase
         .from("dados_usuario")
         .select("nome_completo, foto_url")
-        .eq("user_id", uid)
+        .eq("user_id", auth.user.id)
         .limit(1)
         .single();
 
       if (data?.nome_completo) setUsername(data.nome_completo);
       if (data?.foto_url) setAvatarUrl(data.foto_url);
 
-      const channel = supabase
-        .channel("profile-updates")
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "dados_usuario",
-            filter: `user_id=eq.${uid}`,
-          },
-          (payload) => {
-            if (payload.new?.foto_url) {
-              setAvatarUrl(payload.new.foto_url);
-            }
-          }
-        )
-        .subscribe();
-
       setLoading(false);
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     };
 
     fetchUser();
@@ -90,7 +67,7 @@ export default function Profile() {
   const pickAndUploadImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.5,
+      quality: 0.7,
       base64: true,
     });
 
@@ -101,13 +78,6 @@ export default function Profile() {
       const mimeType = mime.lookup(fileExt || "jpg") || "image/jpeg";
       const path = `avatars/${fileName}`;
 
-      console.log("📦 Imagem selecionada:");
-      console.log("URI:", image.uri);
-      console.log("Extensão:", fileExt);
-      console.log("MIME type:", mimeType);
-      console.log("Path Supabase:", path);
-      console.log("Tamanho base64:", image.base64?.length);
-
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(path, decode(image.base64 || ""), {
@@ -116,12 +86,12 @@ export default function Profile() {
         });
 
       if (uploadError) {
-        console.log("❌ Erro ao fazer upload:", uploadError);
-        Alert.alert("Erro", `Falha ao carregar imagem. ${uploadError.message}`);
+        Alert.alert("Erro", "Falha ao carregar imagem.");
         return;
       }
 
       const { data: publicUrl } = supabase.storage.from("avatars").getPublicUrl(path);
+      setAvatarUrl(publicUrl.publicUrl);
 
       const { error: updateError } = await supabase
         .from("dados_usuario")
@@ -129,12 +99,7 @@ export default function Profile() {
         .eq("user_id", userId);
 
       if (updateError) {
-        console.log("⚠️ Erro ao atualizar foto_url:", updateError);
         Alert.alert("Erro", "Imagem enviada mas não foi possível guardar na base de dados.");
-      } else {
-        console.log("✅ Foto carregada com sucesso:", publicUrl.publicUrl);
-        // 👇 Força atualização imediata
-        setAvatarUrl(`${publicUrl.publicUrl}?t=${Date.now()}`);
       }
     }
   };
@@ -150,6 +115,7 @@ export default function Profile() {
   return (
     <SafeAreaView className="flex-1 bg-[#F9FAFB]">
       <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
+        {/* Cabeçalho */}
         <View className="px-6 pt-8">
           <Text className="text-[26px] font-semibold text-neutral-900 mb-1 tracking-tight">
             Bem-vindo, {username?.split(" ")[0] || "Utilizador"} 👋
@@ -157,12 +123,11 @@ export default function Profile() {
           <Text className="text-sm text-neutral-500">Gerir conta e preferências</Text>
         </View>
 
+        {/* Avatar com edição */}
         <View className="items-center mt-8 mb-4">
           <View className="relative">
             <Image
-              source={{
-                uri: avatarUrl ? `${avatarUrl}` : Image.resolveAssetSource(images.avatar).uri,
-              }}
+              source={{ uri: avatarUrl || Image.resolveAssetSource(images.avatar).uri }}
               className="w-32 h-32 rounded-full border-[3px] border-[#1E3A8A]"
             />
             <TouchableOpacity
@@ -175,6 +140,7 @@ export default function Profile() {
           <Text className="text-lg font-medium mt-3 text-neutral-800">{username}</Text>
         </View>
 
+        {/* Secções */}
         <View className="space-y-6 px-6 mt-4">
           <Section title="Conta">
             <MenuItem icon={icons.calendar} label="Histórico" onPress={() => router.push("/explore")} />
