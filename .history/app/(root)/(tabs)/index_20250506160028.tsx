@@ -7,9 +7,9 @@ import {
   Alert,
   TouchableOpacity,
   Dimensions,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Image } from "react-native";
 import { supabase } from "../../../lib/supabase";
 import icons from "@/constants/icons";
 import images from "../../../constants/images";
@@ -37,15 +37,9 @@ export default function Index() {
   useEffect(() => {
     const fetchLatestData = async () => {
       try {
-        const { data: authData, error: authError } = await supabase.auth.getUser();
-        if (authError || !authData?.user) throw authError;
-
-        const userId = authData.user.id;
-
         const { data, error } = await supabase
           .from("dados_usuario")
           .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose")
-          .eq("user_id", userId)
           .order("created_at", { ascending: false })
           .limit(1);
 
@@ -70,6 +64,7 @@ export default function Index() {
             const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
             const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
             setSleepEvaluation(Number(finalScore.toFixed(1)));
+
             setSleepMessage(finalScore <= 5 ? "Tente dormir melhor hoje!" : "O seu sono está ótimo!");
           }
 
@@ -87,6 +82,8 @@ export default function Index() {
     };
 
     fetchLatestData();
+    resetChallengesIfNecessary();
+
     const intervalId = setInterval(fetchLatestData, 10000);
     return () => clearInterval(intervalId);
   }, []);
@@ -112,8 +109,8 @@ export default function Index() {
           <View style={styles.headerLeft}>
             <Image source={images.avatar} style={styles.avatar} />
             <View>
-              <Text style={styles.greeting}>Olá</Text>
-              <Text style={styles.subGreeting}>Preparado para o dia de hoje?</Text>
+              <Text style={styles.greeting}>Olá, Gui 👋</Text>
+              <Text style={styles.subGreeting}>Pronto para hoje?</Text>
             </View>
           </View>
           <Image source={icons.bell} style={styles.bellIcon} />
@@ -193,6 +190,7 @@ export default function Index() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },

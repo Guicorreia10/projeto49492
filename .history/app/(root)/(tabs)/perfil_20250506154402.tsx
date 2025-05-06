@@ -11,7 +11,6 @@ const Profile = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -28,66 +27,21 @@ const Profile = () => {
     Alert.alert("Idioma alterado", `Agora está em: ${newLanguage}`);
   };
 
-  const fetchUserData = async (uid?: string) => {
+  const fetchUserData = async () => {
     try {
-      const currentUserId = uid ?? userId;
-      if (!currentUserId) return;
-
-      const { data: dados, error: dadosErro } = await supabase
-        .from("dados_usuario")
-        .select("nome_completo")
-        .eq("user_id", currentUserId)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (dadosErro) {
-        console.error("Erro ao buscar dados_usuario:", dadosErro);
-      }
-
-      if (dados && dados.length > 0 && dados[0].nome_completo) {
-        setUsername(dados[0].nome_completo);
-      }
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      const nome = data?.user?.user_metadata?.full_name || data?.user?.email || "Utilizador";
+      setUsername(nome);
     } catch (e) {
-      console.error("Erro no fetchUserData:", e);
+      Alert.alert("Erro", "Não foi possível obter os dados do utilizador.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const init = async () => {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData?.user) return;
-
-      setUserId(authData.user.id);
-      await fetchUserData(authData.user.id);
-
-      // Subscrição a updates em tempo real
-      const channel = supabase
-        .channel("user-updates")
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "dados_usuario",
-            filter: `user_id=eq.${authData.user.id}`,
-          },
-          (payload) => {
-            const novoNome = payload.new?.nome_completo;
-            if (novoNome) {
-              setUsername(novoNome);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-
-    init();
+    fetchUserData();
   }, []);
 
   if (loading) {
@@ -103,9 +57,7 @@ const Profile = () => {
       <ScrollView contentContainerClassName="pb-28 px-6">
         {/* Header */}
         <View className="flex-row justify-between items-center mt-6 mb-4">
-          <Text className="text-2xl font-bold text-gray-900">
-            Olá, {username?.split(" ")[0] || "Utilizador"} 👋
-          </Text>
+          <Text className="text-2xl font-bold text-gray-900">Olá, {username?.split(" ")[0] || "Utilizador"} 👋</Text>
           <Image source={icons.bell} className="w-5 h-5" />
         </View>
 
@@ -118,7 +70,7 @@ const Profile = () => {
         {/* Opções */}
         <View className="space-y-4">
           <MenuItem icon={icons.calendar} label="Histórico" onPress={() => router.push("/explore")} />
-          <MenuItem icon={icons.altconta} label="Editar Conta" onPress={() => router.push("/(root)/editarconta")} />
+          <MenuItem icon={icons.altconta} label="Editar Conta" onPress={() => {}} />
           <MenuItem icon={icons.shield} label="Privacidade" onPress={() => router.push("/(root)/politica")} />
         </View>
 

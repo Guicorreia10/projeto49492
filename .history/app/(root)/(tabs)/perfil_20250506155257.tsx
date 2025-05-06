@@ -11,7 +11,6 @@ const Profile = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -28,66 +27,42 @@ const Profile = () => {
     Alert.alert("Idioma alterado", `Agora está em: ${newLanguage}`);
   };
 
-  const fetchUserData = async (uid?: string) => {
+  const fetchUserData = async () => {
     try {
-      const currentUserId = uid ?? userId;
-      if (!currentUserId) return;
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user) throw authError;
+
+      const userId = authData.user.id;
+      console.log("ID do utilizador autenticado:", userId);
 
       const { data: dados, error: dadosErro } = await supabase
         .from("dados_usuario")
         .select("nome_completo")
-        .eq("user_id", currentUserId)
-        .order("created_at", { ascending: false })
-        .limit(1);
+        .eq("user_id", userId)
+        .single();
+
+      console.log("Resultado de dados_usuario:", dados);
 
       if (dadosErro) {
         console.error("Erro ao buscar dados_usuario:", dadosErro);
       }
 
-      if (dados && dados.length > 0 && dados[0].nome_completo) {
-        setUsername(dados[0].nome_completo);
+      if (dados?.nome_completo) {
+        setUsername(dados.nome_completo);
+      } else {
+        setUsername(authData.user.email || "Utilizador");
       }
     } catch (e) {
-      console.error("Erro no fetchUserData:", e);
+      console.error("Erro geral no fetchUserData:", e);
+      Alert.alert("Erro", "Não foi possível obter os dados do utilizador.");
+      setUsername("Utilizador");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const init = async () => {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData?.user) return;
-
-      setUserId(authData.user.id);
-      await fetchUserData(authData.user.id);
-
-      // Subscrição a updates em tempo real
-      const channel = supabase
-        .channel("user-updates")
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "dados_usuario",
-            filter: `user_id=eq.${authData.user.id}`,
-          },
-          (payload) => {
-            const novoNome = payload.new?.nome_completo;
-            if (novoNome) {
-              setUsername(novoNome);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-
-    init();
+    fetchUserData();
   }, []);
 
   if (loading) {

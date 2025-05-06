@@ -61,8 +61,8 @@
             "./assets/fonts/Rubik-SemiBold.ttf"
           ]
         }
-      ]
-
+      ],
+      "react-native-ble-plx"
     ],
     "experiments": {
       "typedRoutes": true

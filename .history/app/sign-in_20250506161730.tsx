@@ -46,7 +46,7 @@ const SignIn = () => {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholderTextColor="#DDE6ED"
+          placeholderTextColor="#ccc"
           style={styles.input}
         />
 
@@ -55,7 +55,7 @@ const SignIn = () => {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholderTextColor="#DDE6ED"
+          placeholderTextColor="#ccc"
           style={styles.input}
         />
 
@@ -74,11 +74,11 @@ const SignIn = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#183D5D", // azul escuro mais claro
+    backgroundColor: "#0D1B2A", // azul escuro
   },
   image: {
     width: "100%",
-    height: "42%",
+    height: "40%",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
@@ -96,12 +96,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: "#F0F4F8",
+    color: "#ccc",
     textAlign: "center",
     marginBottom: 24,
   },
   input: {
-    backgroundColor: "#23527C",
+    backgroundColor: "#1B263B",
     color: "#fff",
     padding: 14,
     borderRadius: 10,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   signupText: {
-    color: "#DCE7F1",
+    color: "#8FAADC",
     textAlign: "center",
     fontSize: 14,
     marginTop: 8,

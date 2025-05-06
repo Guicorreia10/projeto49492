@@ -39,7 +39,19 @@ const ManualInputScreen = () => {
         <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Dados do Sono</Text>
       </TouchableOpacity>
 
-     
+      {/* Nova opção: Conexão Bluetooth */}
+      <TouchableOpacity
+        onPress={() => router.push('/manual-input/conectbl')}
+        style={{
+          backgroundColor: '#9C27B0',
+          padding: 15,
+          borderRadius: 10,
+          width: '80%',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Conectar via Bluetooth</Text>
+      </TouchableOpacity>
 
     </View>
   );

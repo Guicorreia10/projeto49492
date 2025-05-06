@@ -7,7 +7,10 @@ import {
   Alert,
   Image,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+import * as Animatable from "react-native-animatable";
 import { useRouter } from "expo-router";
 import { supabase } from "../lib/supabase";
 
@@ -29,14 +32,20 @@ const SignIn = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <Animatable.Image
+        animation="fadeInDown"
+        duration={1000}
+        delay={200}
         source={require("../assets/images/onboarding.png")}
         resizeMode="cover"
         style={styles.image}
       />
 
-      <View style={styles.content}>
+      <Animatable.View animation="fadeInUp" duration={1000} style={styles.content}>
         <Text style={styles.title}>GlicoSleep</Text>
         <Text style={styles.subtitle}>Bem-vindo de volta 👋</Text>
 
@@ -66,15 +75,15 @@ const SignIn = () => {
         <TouchableOpacity onPress={() => router.push("/registo")}>
           <Text style={styles.signupText}>Ainda não tens conta? Regista-te</Text>
         </TouchableOpacity>
-      </View>
-    </View>
+      </Animatable.View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#183D5D", // azul escuro mais claro
+    backgroundColor: "#183D5D",
   },
   image: {
     width: "100%",

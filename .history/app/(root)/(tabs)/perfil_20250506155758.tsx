@@ -46,6 +46,8 @@ const Profile = () => {
 
       if (dados && dados.length > 0 && dados[0].nome_completo) {
         setUsername(dados[0].nome_completo);
+      } else {
+        setUsername("Utilizador");
       }
     } catch (e) {
       console.error("Erro no fetchUserData:", e);
@@ -59,28 +61,41 @@ const Profile = () => {
       const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError || !authData?.user) return;
 
-      setUserId(authData.user.id);
-      await fetchUserData(authData.user.id);
+      const id = authData.user.id;
+      setUserId(id);
+      await fetchUserData(id);
 
-      // Subscrição a updates em tempo real
-      const channel = supabase
-        .channel("user-updates")
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "dados_usuario",
-            filter: `user_id=eq.${authData.user.id}`,
-          },
-          (payload) => {
-            const novoNome = payload.new?.nome_completo;
-            if (novoNome) {
-              setUsername(novoNome);
-            }
-          }
-        )
-        .subscribe();
+      const channel = supabase.channel("user-updates");
+
+      // Subscrição a INSERTs
+      channel.on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "dados_usuario",
+          filter: `user_id=eq.${id}`,
+        },
+        () => {
+          fetchUserData(id);
+        }
+      );
+
+      // Subscrição a UPDATEs
+      channel.on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "dados_usuario",
+          filter: `user_id=eq.${id}`,
+        },
+        () => {
+          fetchUserData(id);
+        }
+      );
+
+      channel.subscribe();
 
       return () => {
         supabase.removeChannel(channel);

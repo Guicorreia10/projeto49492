@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../../lib/supabase";
 import icons from "@/constants/icons";
 import images from "../../../constants/images";
-import { LineChart } from "react-native-chart-kit";
+import { BarChart } from "react-native-chart-kit";
 
 export default function Index() {
   const [sleepEvaluation, setSleepEvaluation] = useState<number | null>(null);
@@ -37,16 +37,10 @@ export default function Index() {
   useEffect(() => {
     const fetchLatestData = async () => {
       try {
-        const { data: authData, error: authError } = await supabase.auth.getUser();
-        if (authError || !authData?.user) throw authError;
-
-        const userId = authData.user.id;
-
         const { data, error } = await supabase
           .from("dados_usuario")
           .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
+          .order("id", { ascending: false }) // garantir que vem o último inserido
           .limit(1);
 
         if (error) {
@@ -87,6 +81,8 @@ export default function Index() {
     };
 
     fetchLatestData();
+    resetChallengesIfNecessary();
+
     const intervalId = setInterval(fetchLatestData, 10000);
     return () => clearInterval(intervalId);
   }, []);
@@ -135,64 +131,48 @@ export default function Index() {
           <Text style={styles.cardText}>{glucoseMessage}</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Desafio do Dia</Text>
-        {challenges.map((c) => (
-          <View key={c.id} style={styles.challengeCard}>
-            <Text style={styles.challengeIcon}>{c.text.split(" ")[0]}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.challengeTitle}>{c.text.replace(/^.{2}\s/, "")}</Text>
-              <TouchableOpacity
-                onPress={() => toggleChallenge(c.id)}
-                style={[styles.challengeButton, c.completed && styles.challengeButtonCompleted]}
-              >
-                <Text
-                  style={[styles.challengeButtonText, c.completed && styles.challengeButtonTextCompleted]}
-                >
-                  {c.completed ? "Concluído ✅" : "Concluir"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-
-        <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
-        <LineChart
+        <Text style={styles.sectionTitle}>Comparação Sono vs Glicose</Text>
+        <BarChart
           data={{
             labels: dias,
             datasets: [
-              {
-                data: dadosSono,
-                color: () => "#4A90E2",
-                strokeWidth: 2,
-              },
-              {
-                data: dadosGlicose,
-                color: () => "#E94E77",
-                strokeWidth: 2,
-              },
+              { data: dadosSono.map((v) => Number(v.toFixed(1))) },
+              { data: dadosGlicose.map((g) => Number(Math.min(g / 14, 10).toFixed(1))) },
             ],
-            legend: ["Sono (0-10)", "Glicose (mg/dL)"],
           }}
           width={Dimensions.get("window").width - 40}
-          height={220}
+          height={250}
+          fromZero
+          showBarTops
+          yAxisLabel=""
+          yAxisSuffix=""
           chartConfig={{
             backgroundGradientFrom: "#fff",
             backgroundGradientTo: "#fff",
-            color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-            labelColor: () => "#333",
-            propsForDots: {
-              r: "6",
-              strokeWidth: "2",
-              stroke: "#fff",
-            },
+            decimalPlaces: 1,
+            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            labelColor: () => "#555",
+            propsForLabels: { fontSize: 10 },
           }}
-          bezier
-          style={{ borderRadius: 12, marginVertical: 10 }}
+          style={{ marginVertical: 10, borderRadius: 12 }}
         />
+
+        {/* Legenda manual */}
+        <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginHorizontal: 10 }}>
+            <View style={{ width: 12, height: 12, backgroundColor: "#4A90E2", marginRight: 6 }} />
+            <Text style={{ fontSize: 12 }}>Sono</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", marginHorizontal: 10 }}>
+            <View style={{ width: 12, height: 12, backgroundColor: "#E94E77", marginRight: 6 }} />
+            <Text style={{ fontSize: 12 }}>Glicose (normalizado)</Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },

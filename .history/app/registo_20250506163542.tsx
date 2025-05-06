@@ -13,9 +13,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { supabase } from "../lib/supabase";
-
-// Imagem nova horizontal
-import iconImage from "../assets/images/registo.png";
+import iconImage from "../assets/images/icon.png";
 
 const Registo = () => {
   const [nome, setNome] = useState("");
@@ -52,7 +50,6 @@ const Registo = () => {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Imagem topo */}
         <Image source={iconImage} style={styles.image} />
 
         <View style={styles.content}>
@@ -86,7 +83,7 @@ const Registo = () => {
           />
 
           <TouchableOpacity onPress={handleRegister} style={styles.registerButton}>
-            <Text style={styles.registerButtonText}>Registar</Text>
+            <Text style={styles.registerButtonText}>Registrar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push("/sign-in")}>
@@ -98,7 +95,6 @@ const Registo = () => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -109,7 +105,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 320,
+    height: 300,
     resizeMode: "cover",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,

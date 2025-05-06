@@ -16,6 +16,7 @@ import images from "../../../constants/images";
 import { LineChart } from "react-native-chart-kit";
 
 export default function Index() {
+  const [username, setUsername] = useState<string>("Utilizador");
   const [sleepEvaluation, setSleepEvaluation] = useState<number | null>(null);
   const [sleepMessage, setSleepMessage] = useState<string>("A carregar...");
   const [glucoseValue, setGlucoseValue] = useState<number | null>(null);
@@ -34,59 +35,84 @@ export default function Index() {
   const dadosSono = [6.5, 7.0, 4.8, 8.2, 7.5, 6.9, sleepEvaluation ?? 0];
   const dadosGlicose = [130, 120, 140, 100, 110, 135, glucoseValue ?? 0];
 
-  useEffect(() => {
-    const fetchLatestData = async () => {
-      try {
-        const { data: authData, error: authError } = await supabase.auth.getUser();
-        if (authError || !authData?.user) throw authError;
+  const fetchUsername = async () => {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user) return;
 
-        const userId = authData.user.id;
+      const userId = authData.user.id;
 
-        const { data, error } = await supabase
-          .from("dados_usuario")
-          .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(1);
+      const { data, error } = await supabase
+        .from("dados_usuario")
+        .select("nome_completo")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-        if (error) {
-          console.error("Erro ao buscar dados:", error);
-          Alert.alert("Erro", "Não foi possível carregar os dados.");
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
-
-          if (
-            sono !== null &&
-            qualidade_sono !== null &&
-            dificuldade_ao_dormir !== null &&
-            uso_dispositivos !== null
-          ) {
-            const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
-            const qualityScore = qualidade_sono * 0.3;
-            const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
-            const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
-            const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
-            setSleepEvaluation(Number(finalScore.toFixed(1)));
-            setSleepMessage(finalScore <= 5 ? "Tente dormir melhor hoje!" : "O seu sono está ótimo!");
-          }
-
-          if (glicose !== null) {
-            setGlucoseValue(glicose);
-            if (glicose <= 70) setGlucoseMessage("Atenção: glicose baixa.");
-            else if (glicose <= 140) setGlucoseMessage("Glicose dentro do normal!");
-            else setGlucoseMessage("Tenha cuidado: glicose elevada.");
-          }
-        }
-      } catch (err) {
-        console.error("Erro inesperado:", err);
-        Alert.alert("Erro", "Erro ao carregar dados.");
+      if (error) {
+        console.error("Erro ao buscar nome do utilizador:", error);
+        return;
       }
-    };
 
+      if (data && data.length > 0 && data[0].nome_completo) {
+        setUsername(data[0].nome_completo);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar nome do utilizador:", err);
+    }
+  };
+
+  const fetchLatestData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("dados_usuario")
+        .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error("Erro ao buscar dados:", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados.");
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
+
+        if (
+          sono !== null &&
+          qualidade_sono !== null &&
+          dificuldade_ao_dormir !== null &&
+          uso_dispositivos !== null
+        ) {
+          const hoursScore = Math.min((sono / 8) * 10, 10) * 0.4;
+          const qualityScore = qualidade_sono * 0.3;
+          const difficultyScore = dificuldade_ao_dormir === "Sim" ? 0 : 10 * 0.2;
+          const deviceScore = uso_dispositivos === "Sim" ? 0 : 10 * 0.1;
+          const finalScore = hoursScore + qualityScore + difficultyScore + deviceScore;
+          setSleepEvaluation(Number(finalScore.toFixed(1)));
+
+          setSleepMessage(finalScore <= 5 ? "Tente dormir melhor hoje!" : "O seu sono está ótimo!");
+        }
+
+        if (glicose !== null) {
+          setGlucoseValue(glicose);
+          if (glicose <= 70) setGlucoseMessage("Atenção: glicose baixa.");
+          else if (glicose <= 140) setGlucoseMessage("Glicose dentro do normal!");
+          else setGlucoseMessage("Tenha cuidado: glicose elevada.");
+        }
+      }
+    } catch (err) {
+      console.error("Erro inesperado:", err);
+      Alert.alert("Erro", "Erro ao carregar dados.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUsername();
     fetchLatestData();
+    resetChallengesIfNecessary();
+
     const intervalId = setInterval(fetchLatestData, 10000);
     return () => clearInterval(intervalId);
   }, []);
@@ -112,8 +138,8 @@ export default function Index() {
           <View style={styles.headerLeft}>
             <Image source={images.avatar} style={styles.avatar} />
             <View>
-              <Text style={styles.greeting}>Olá</Text>
-              <Text style={styles.subGreeting}>Preparado para o dia de hoje?</Text>
+              <Text style={styles.greeting}>Olá, {username?.split(" ")[0] || "Utilizador"} 👋</Text>
+              <Text style={styles.subGreeting}>Pronto para hoje?</Text>
             </View>
           </View>
           <Image source={icons.bell} style={styles.bellIcon} />
@@ -193,6 +219,7 @@ export default function Index() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },

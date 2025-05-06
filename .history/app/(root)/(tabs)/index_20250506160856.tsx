@@ -37,16 +37,10 @@ export default function Index() {
   useEffect(() => {
     const fetchLatestData = async () => {
       try {
-        const { data: authData, error: authError } = await supabase.auth.getUser();
-        if (authError || !authData?.user) throw authError;
-
-        const userId = authData.user.id;
-
         const { data, error } = await supabase
           .from("dados_usuario")
           .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
           .limit(1);
 
         if (error) {
@@ -87,6 +81,8 @@ export default function Index() {
     };
 
     fetchLatestData();
+    resetChallengesIfNecessary();
+
     const intervalId = setInterval(fetchLatestData, 10000);
     return () => clearInterval(intervalId);
   }, []);
@@ -155,33 +151,33 @@ export default function Index() {
           </View>
         ))}
 
-        <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
+        <Text style={styles.sectionTitle}>Relação Sono vs Glicose</Text>
         <LineChart
           data={{
             labels: dias,
             datasets: [
               {
-                data: dadosSono,
+                data: dadosSono.map((v) => Number(v.toFixed(1))),
                 color: () => "#4A90E2",
                 strokeWidth: 2,
               },
               {
-                data: dadosGlicose,
+                data: dadosGlicose.map((g) => Number(Math.min(g / 14, 10).toFixed(1))),
                 color: () => "#E94E77",
                 strokeWidth: 2,
               },
             ],
-            legend: ["Sono (0-10)", "Glicose (mg/dL)"],
           }}
           width={Dimensions.get("window").width - 40}
-          height={220}
+          height={250}
           chartConfig={{
             backgroundGradientFrom: "#fff",
             backgroundGradientTo: "#fff",
-            color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-            labelColor: () => "#333",
+            decimalPlaces: 1,
+            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            labelColor: () => "#555",
             propsForDots: {
-              r: "6",
+              r: "5",
               strokeWidth: "2",
               stroke: "#fff",
             },
@@ -189,10 +185,22 @@ export default function Index() {
           bezier
           style={{ borderRadius: 12, marginVertical: 10 }}
         />
+
+        <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginHorizontal: 10 }}>
+            <View style={{ width: 12, height: 12, backgroundColor: "#4A90E2", marginRight: 6 }} />
+            <Text style={{ fontSize: 12 }}>Sono</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", marginHorizontal: 10 }}>
+            <View style={{ width: 12, height: 12, backgroundColor: "#E94E77", marginRight: 6 }} />
+            <Text style={{ fontSize: 12 }}>Glicose (normalizado)</Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F0F8FF" },
   scrollContent: { padding: 20 },
