@@ -11,13 +11,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../../lib/supabase";
-import { useRouter } from "expo-router";
 import icons from "@/constants/icons";
 import images from "../../../constants/images";
 import { LineChart } from "react-native-chart-kit";
 
 export default function Index() {
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [sleepEvaluation, setSleepEvaluation] = useState<number | null>(null);
   const [sleepMessage, setSleepMessage] = useState<string>("A carregar...");
   const [glucoseValue, setGlucoseValue] = useState<number | null>(null);
@@ -26,7 +24,6 @@ export default function Index() {
     { id: 2, text: "💧 Beber 8 copos de água hoje", completed: false },
   ]);
   const [lastReset, setLastReset] = useState<Date | null>(null);
-  const router = useRouter();
 
   const dias = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -38,28 +35,19 @@ export default function Index() {
   const dadosGlicose = [130, 120, 140, 100, 110, 135, glucoseValue ?? 0];
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data?.session) {
-        console.log("❌ Sessão ausente, redirecionar para login");
-        router.replace("/sign-in");
-      } else {
-        console.log("✅ Sessão ativa");
-        setSessionChecked(true);
-      }
-    };
-    checkSession();
-  }, []);
-
-  useEffect(() => {
-    if (!sessionChecked) return;
+    let isMounted = true;
 
     const fetchLatestData = async () => {
       try {
-        const { data: authData, error: authError } = await supabase.auth.getUser();
-        if (authError || !authData?.user) throw authError;
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
-        const userId = authData.user.id;
+        if (sessionError) throw sessionError;
+        if (!sessionData.session) {
+          console.log("Sessão ainda não disponível");
+          return;
+        }
+
+        const userId = sessionData.session.user.id;
 
         const { data, error } = await supabase
           .from("dados_usuario")
@@ -74,7 +62,7 @@ export default function Index() {
           return;
         }
 
-        if (data && data.length > 0) {
+        if (isMounted && data && data.length > 0) {
           const { sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose } = data[0];
 
           if (
@@ -107,18 +95,25 @@ export default function Index() {
 
     fetchLatestData();
     const intervalId = setInterval(fetchLatestData, 10000);
-    return () => clearInterval(intervalId);
-  }, [sessionChecked]);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const resetChallengesIfNecessary = () => {
+    const now = new Date();
+    if (!lastReset || now.getDate() !== lastReset.getDate()) {
+      setChallenges((prev) => prev.map((c) => ({ ...c, completed: false })));
+      setLastReset(now);
+    }
+  };
 
   const toggleChallenge = (id: number) => {
     setChallenges((prev) =>
       prev.map((c) => (c.id === id ? { ...c, completed: !c.completed } : c))
     );
   };
-
-  if (!sessionChecked) {
-    return <View style={{ flex: 1, backgroundColor: "#F0F8FF" }} />;
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>

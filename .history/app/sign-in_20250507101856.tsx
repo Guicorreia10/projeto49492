@@ -41,7 +41,7 @@ const SignIn = () => {
         <Text style={styles.subtitle}>Bem-vindo de volta 👋</Text>
 
         <TextInput
-          placeholder="Email"
+          placeholder="Emailll"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -51,7 +51,7 @@ const SignIn = () => {
         />
 
         <TextInput
-          placeholder="Password"
+          placeholder="Senha"
           value={password}
           onChangeText={setPassword}
           secureTextEntry

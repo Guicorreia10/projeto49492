@@ -51,7 +51,7 @@ const SignIn = () => {
         />
 
         <TextInput
-          placeholder="Password"
+          placeholder="Senha"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
