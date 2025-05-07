@@ -1,23 +1,30 @@
 // app/help/chatbot.tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TextInput,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   SafeAreaView,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 
-type Message = { id: string; text: string; fromBot: boolean };
+type Message = {
+  id: string;
+  text: string;
+  fromBot: boolean;
+};
+
 type RoleMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
 export default function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // histórico para a API
   const [history, setHistory] = useState<RoleMessage[]>([
     {
       role: 'system',
@@ -26,8 +33,7 @@ export default function Chatbot() {
     },
   ]);
 
-  const scrollRef = useRef<ScrollView>(null);
-
+  // mensagem inicial
   useEffect(() => {
     setMessages([
       {
@@ -39,30 +45,34 @@ export default function Chatbot() {
     ]);
   }, []);
 
-  useEffect(() => {
-    scrollRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
-
   const sendMessage = useCallback(async () => {
     if (!input.trim()) return;
 
-    // 1) bolha do utilizador
+    // 1) adiciona user bubble
     const userMsg: Message = {
       id: Date.now().toString(),
       text: input,
       fromBot: false,
     };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
 
-    // 2) atualiza histórico, assegurando 'user' literal
-    const newEntry: RoleMessage = { role: 'user', content: input };
-    const newHistory = [...history, newEntry];
-    setHistory(newHistory);
+    // 2) adiciona ao histórico (assegura literal do role)
+    setHistory((prev) => [
+      ...prev,
+      { role: 'user', content: input } as RoleMessage,
+    ]);
 
     setInput('');
     setLoading(true);
 
+    // 3) chama a API com todo o histórico
     try {
+      const payload = [
+        ...history,
+        { role: 'user', content: input } as RoleMessage,
+      ];
+      console.log('📤 Payload para API:', payload);
+
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -71,36 +81,37 @@ export default function Chatbot() {
             'Bearer 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',
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: newHistory,
+          model: 'openchat/openchat-3.5',
+          messages: payload,
         }),
       });
       const json = await res.json();
+      console.log('📥 Resposta da API:', json);
 
       const botContent =
-        (json.choices?.[0]?.message?.content as string)?.trim() ||
+        json.choices?.[0]?.message?.content?.trim() ||
         'Desculpa, não consegui gerar uma resposta.';
+      // 4) adiciona assistant ao histórico
+      setHistory((prev) => [
+        ...prev,
+        { role: 'assistant', content: botContent } as RoleMessage,
+      ]);
 
-      // 3) adiciona ao histórico de assistant
-      const assistantEntry: RoleMessage = { role: 'assistant', content: botContent };
-      setHistory(prev => [...prev, assistantEntry]);
-
-      // 4) bolha do bot
+      // 5) adiciona bot bubble
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         text: botContent,
         fromBot: true,
       };
-      setMessages(prev => [...prev, botMsg]);
-    } catch {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: (Date.now() + 2).toString(),
-          text: 'Ocorreu um erro ao comunicar com o servidor.',
-          fromBot: true,
-        },
-      ]);
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (e) {
+      console.error('❌ Erro ao contactar a API:', e);
+      const errMsg: Message = {
+        id: (Date.now() + 2).toString(),
+        text: 'Ocorreu um erro ao comunicar com o servidor.',
+        fromBot: true,
+      };
+      setMessages((prev) => [...prev, errMsg]);
     } finally {
       setLoading(false);
     }
@@ -108,32 +119,34 @@ export default function Chatbot() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        {messages.map(msg => (
+      <FlatList
+        data={messages}
+        keyExtractor={(item) => item.id}
+        inverted
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'flex-end',
+          padding: 16,
+        }}
+        renderItem={({ item }) => (
           <View
-            key={msg.id}
             style={[
               styles.bubble,
-              msg.fromBot ? styles.botBubble : styles.userBubble,
+              item.fromBot ? styles.botBubble : styles.userBubble,
             ]}
           >
-            <Text style={msg.fromBot ? styles.botText : styles.userText}>
-              {msg.text}
+            <Text style={item.fromBot ? styles.botText : styles.userText}>
+              {item.text}
             </Text>
           </View>
-        ))}
-        {loading && (
-          <ActivityIndicator
-            style={styles.loading}
-            size="small"
-            color="#4A90E2"
-          />
         )}
-      </ScrollView>
+      />
+
+      {loading && (
+        <View style={styles.loading}>
+          <ActivityIndicator size="small" color="#4A90E2" />
+        </View>
+      )}
 
       <View style={styles.inputRow}>
         <TextInput
@@ -141,8 +154,6 @@ export default function Chatbot() {
           value={input}
           onChangeText={setInput}
           placeholder="Escreve aqui..."
-          onSubmitEditing={sendMessage}
-          blurOnSubmit={false}
         />
         <TouchableOpacity style={styles.sendBtn} onPress={sendMessage}>
           <Text style={styles.sendText}>Enviar</Text>
@@ -154,7 +165,6 @@ export default function Chatbot() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  scrollContent: { padding: 16, paddingBottom: 80 },
   bubble: {
     marginVertical: 4,
     padding: 10,
@@ -178,11 +188,6 @@ const styles = StyleSheet.create({
     padding: 8,
     borderTopWidth: 1,
     borderColor: '#eee',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#fff',
   },
   input: {
     flex: 1,
@@ -190,7 +195,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     fontSize: 16,
-    height: 40,
   },
   sendBtn: {
     marginLeft: 8,
@@ -201,5 +205,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendText: { color: '#fff', fontWeight: '600' },
-  loading: { marginTop: 8 },
+  loading: { position: 'absolute', right: 16, bottom: 60 },
 });

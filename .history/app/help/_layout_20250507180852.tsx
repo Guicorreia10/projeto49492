@@ -1,9 +1,8 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Image } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'; // Importando KeyboardAwareScrollView
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import icons from '@/constants/icons';
 
 const Help = () => {
@@ -40,7 +39,7 @@ const Help = () => {
           Explore os tópicos abaixo para obter mais detalhes sobre como usar a nossa aplicação.
         </Text>
 
-        {/* Botões com ícones e navegação */}
+        {/* Botões de navegação */}
         <View className="flex flex-col mt-10 gap-5">
           <TouchableOpacity
             className="bg-primary-500 p-5 rounded-lg flex-row items-center justify-between shadow-md"
@@ -68,7 +67,7 @@ const Help = () => {
 
           <TouchableOpacity
             className="bg-indigo-500 p-5 rounded-lg flex-row items-center justify-between shadow-md"
-            onPress={() => router.push('/help/chatbot')}
+            onPress={() => router.push('/help/chatbot')} // 👈 ligação correta
           >
             <Text className="text-xl text-white font-rubik-bold">🤖 Falar com o Chatbot</Text>
             <Image source={icons.rightArrow} className="size-6" />
