@@ -82,19 +82,19 @@ export default function AnaliseComida() {
         glycemicLoad:  glycemicLoadNum,
         description:   glyImpact.description,
       };
-     
+      console.log('🍽️ Montando registro para inserção:', foodData);
 
-      // 5) Atualiza estado local (para exibição)
+      // 5) Atualiza estado local
       setMealData(prev => [...prev, foodData]);
 
-      // 6) Grava na tabela `comida`
+      // 6) Grava no Supabase
       const { data: authData, error: authErr } = await supabase.auth.getUser();
       console.log('🔑 supabase.auth.getUser():', authData, authErr);
       const user = authData?.user;
       if (authErr || !user) throw new Error('Utilizador não autenticado.');
 
       const { data: inserted, error: insertErr } = await supabase
-        .from('comida')             // <–– Aqui mudámos para a tabela `comida`
+        .from('dados_usuario')
         .insert([{
           user_id:         user.id,
           food_name:       foodData.name,
@@ -107,13 +107,13 @@ export default function AnaliseComida() {
         .select();
 
       if (insertErr) {
-        console.error('❌ Erro ao inserir na `comida`:', insertErr);
+        console.error(' Erro ao inserir no Supabase:', insertErr);
         Alert.alert('Erro BD', insertErr.message);
       } else {
-        console.log('✅ Inserido com sucesso na `comida`:', inserted);
+        console.log('✅ Inserido com sucesso no Supabase:', inserted);
       }
     } catch (err: any) {
-      console.error('🚨 Falha na análise ou inserção:', err);
+      console.error(' Falha na análise ou inserção:', err);
       Alert.alert('Erro', err.message || 'Falha ao analisar e gravar.');
     } finally {
       setIsAnalyzing(false);
@@ -178,10 +178,10 @@ export default function AnaliseComida() {
             {mealData.map((f, idx) => (
               <View key={idx} style={styles.result}>
                 <Text style={styles.info}>🍽️ {f.name}</Text>
-                <Text style={styles.info}>⚖️ Quantidade: {f.quantity} g</Text>
-                <Text style={styles.info}>🔥 {f.calories.toFixed(1)} Calorias</Text>
-                <Text style={styles.info}>🍞 {f.carbs.toFixed(1)} Carbohidratos</Text>
-                <Text style={styles.info}>📊 ÍndiceGlicémico: {f.glycemicIndex}</Text>
+                <Text style={styles.info}>⚖️ {f.quantity} g</Text>
+                <Text style={styles.info}>🔥 {f.calories.toFixed(1)} kcal</Text>
+                <Text style={styles.info}>🍞 {f.carbs.toFixed(1)} g carbs</Text>
+                <Text style={styles.info}>📊 IG: {f.glycemicIndex}</Text>
                 <Text style={styles.info}>💡 {f.description}</Text>
               </View>
             ))}

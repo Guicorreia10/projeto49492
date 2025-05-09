@@ -82,7 +82,7 @@ export default function AnaliseComida() {
         glycemicLoad:  glycemicLoadNum,
         description:   glyImpact.description,
       };
-     
+      console.log('🍽️ Montando registro para inserção:', foodData);
 
       // 5) Atualiza estado local (para exibição)
       setMealData(prev => [...prev, foodData]);
@@ -178,9 +178,9 @@ export default function AnaliseComida() {
             {mealData.map((f, idx) => (
               <View key={idx} style={styles.result}>
                 <Text style={styles.info}>🍽️ {f.name}</Text>
-                <Text style={styles.info}>⚖️ Quantidade: {f.quantity} g</Text>
+                <Text style={styles.info}>⚖️ {f.quantity} g</Text>
                 <Text style={styles.info}>🔥 {f.calories.toFixed(1)} Calorias</Text>
-                <Text style={styles.info}>🍞 {f.carbs.toFixed(1)} Carbohidratos</Text>
+                <Text style={styles.info}>🍞 {f.carbs.toFixed(1)} g Carbohidratos</Text>
                 <Text style={styles.info}>📊 ÍndiceGlicémico: {f.glycemicIndex}</Text>
                 <Text style={styles.info}>💡 {f.description}</Text>
               </View>

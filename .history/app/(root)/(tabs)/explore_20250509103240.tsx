@@ -325,7 +325,7 @@ export default function Explore() {
       </TouchableOpacity>
       
       <TouchableOpacity style={styles.botao} onPress={mostrarInsights}>
-    <Text style={styles.textoBotao}>Opinião GlicoSleep</Text>
+    <Text style={styles.textoBotao}>Ver Insights</Text>
       </TouchableOpacity>
 
 

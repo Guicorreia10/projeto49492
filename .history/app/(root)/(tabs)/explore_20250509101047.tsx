@@ -1,3 +1,5 @@
+// app/(root)/tabs/Explore.tsx
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,8 +17,6 @@ import { supabase } from "../../../lib/supabase";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { gerarInsights } from "../../utils/gerarInsights";
-
 
 interface Registo {
   id: string;
@@ -117,6 +117,7 @@ export default function Explore() {
         Alert.alert("Erro", err.message || "Falha ao carregar histórico.");
       }
     };
+
     carregarTodos();
   }, []);
 
@@ -304,18 +305,9 @@ export default function Explore() {
       val.mediaGlicose = val.countG ? val.totalGlicose / val.countG : 0;
       val.mediaSono = val.countS ? val.totalSono / val.countS : 0;
     });
-    
     return medias;
   };
-  const mostrarInsights = () => {
-    const insights = gerarInsights(registros);
-    if (insights.length === 0) {
-      Alert.alert("Insights", "Sem padrões significativos encontrados.");
-    } else {
-      Alert.alert("Insights", insights.join("\n\n"));
-    }
-  };
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Histórico</Text>
@@ -323,11 +315,6 @@ export default function Explore() {
       <TouchableOpacity style={styles.botao} onPress={exportarPDF}>
         <Text style={styles.textoBotao}>Exportar PDF</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.botao} onPress={mostrarInsights}>
-    <Text style={styles.textoBotao}>Opinião GlicoSleep</Text>
-      </TouchableOpacity>
-
 
       <Calendar
         onDayPress={(day: DateData) => setSelectedDate(day.dateString)}

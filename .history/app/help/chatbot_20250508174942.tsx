@@ -71,7 +71,7 @@ export default function Chatbot() {
           headers: {
             'Content-Type': 'application/json',
             Authorization:
-              'Bearer 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',
+              'Bearer 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',
           },
           body: JSON.stringify({
             model: 'gpt-3.5-turbo',

@@ -43,7 +43,7 @@ const ManualInputScreen = () => {
       <TouchableOpacity
         onPress={() => router.push('/manual-input/insulina')}
         style={{
-          backgroundColor: '#ffb6c1',
+          backgroundColor: '#4CAF50',
           padding: 15,
           borderRadius: 10,
           marginBottom: 10,
@@ -51,7 +51,7 @@ const ManualInputScreen = () => {
           alignItems: 'center',
         }}
       >
-        <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Medicação</Text>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Dados do Sono</Text>
       </TouchableOpacity>
 
      

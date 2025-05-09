@@ -54,49 +54,35 @@ export default function Chatbot() {
     };
     setMessages(prev => [...prev, userMsg]);
 
-    // 2) atualiza histórico
-    const entry: RoleMessage = { role: 'user', content: input };
-    const newHistory = [...history, entry];
+    // 2) atualiza histórico, assegurando 'user' literal
+    const newEntry: RoleMessage = { role: 'user', content: input };
+    const newHistory = [...history, newEntry];
     setHistory(newHistory);
 
     setInput('');
     setLoading(true);
 
     try {
-      console.log('🚀 sendMessage chamado, histórico:', newHistory);
-      const res = await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization:
-              'Bearer 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',
-          },
-          body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
-            messages: newHistory,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`status ${res.status}: ${text}`);
-      }
-
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization:
+            'Bearer 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',
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: newHistory,
+        }),
+      });
       const json = await res.json();
-      console.log('✅ Resposta da API:', json);
 
       const botContent =
         (json.choices?.[0]?.message?.content as string)?.trim() ||
         'Desculpa, não consegui gerar uma resposta.';
 
-      // 3) atualiza histórico
-      const assistantEntry: RoleMessage = {
-        role: 'assistant',
-        content: botContent,
-      };
+      // 3) adiciona ao histórico de assistant
+      const assistantEntry: RoleMessage = { role: 'assistant', content: botContent };
       setHistory(prev => [...prev, assistantEntry]);
 
       // 4) bolha do bot
@@ -106,13 +92,12 @@ export default function Chatbot() {
         fromBot: true,
       };
       setMessages(prev => [...prev, botMsg]);
-    } catch (err: any) {
-      console.error('❌ Erro ao comunicar com a API:', err);
+    } catch {
       setMessages(prev => [
         ...prev,
         {
           id: (Date.now() + 2).toString(),
-          text: `Erro: ${err.message}`,
+          text: 'Ocorreu um erro ao comunicar com o servidor.',
           fromBot: true,
         },
       ]);
@@ -213,6 +198,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 16,
+    justifyContent: 'center',
   },
   sendText: { color: '#fff', fontWeight: '600' },
   loading: { marginTop: 8 },

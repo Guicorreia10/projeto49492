@@ -1,3 +1,5 @@
+// app/(root)/tabs/Explore.tsx
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,8 +17,6 @@ import { supabase } from "../../../lib/supabase";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { gerarInsights } from "../../utils/gerarInsights";
-
 
 interface Registo {
   id: string;
@@ -34,7 +34,6 @@ interface Registo {
   glycemic_impact?: number;
   medicamento?: string;
   dose?: string;
-  descricao?: string;
 }
 
 export default function Explore() {
@@ -58,7 +57,7 @@ export default function Explore() {
 
         const { data: meds, error: err3 } = await supabase
           .from("medicamentos")
-          .select("id, created_at, tipo, quantidade, descricao")
+          .select("id, created_at, tipo, quantidade")
           .order("created_at", { ascending: false });
 
         if (err1 || err2 || err3) throw err1 || err2 || err3;
@@ -103,8 +102,7 @@ export default function Explore() {
             tipo: "medicamento",
             medicamento: r.tipo,
             dose: r.quantidade,
-            descricao: r.descricao,
-                      };
+          };
         });
 
         const todos = [...reg1, ...reg2, ...reg3].sort((a, b) =>
@@ -117,6 +115,7 @@ export default function Explore() {
         Alert.alert("Erro", err.message || "Falha ao carregar histórico.");
       }
     };
+
     carregarTodos();
   }, []);
 
@@ -164,126 +163,34 @@ export default function Explore() {
       </TouchableOpacity>
     );
   };
+
   const exportarPDF = async () => {
-    const resumo: Record<string, {
-      totalGlicose: number;
-      countG: number;
-      totalSono: number;
-      countS: number;
-      alimentos: string[];
-      medicamentos: string[];
-    }> = {};
-  
-    registros.forEach((r) => {
-      if (!resumo[r.data]) {
-        resumo[r.data] = {
-          totalGlicose: 0,
-          countG: 0,
-          totalSono: 0,
-          countS: 0,
-          alimentos: [],
-          medicamentos: [],
-        };
-      }
-  
-      if (r.tipo === "glicose" && r.valorGlicose) {
-        resumo[r.data].totalGlicose += parseFloat(r.valorGlicose);
-        resumo[r.data].countG++;
-      }
-  
-      if (r.tipo === "sono" && r.detalhesSono) {
-        const horas = parseFloat(r.detalhesSono);
-        if (!isNaN(horas)) {
-          resumo[r.data].totalSono += horas;
-          resumo[r.data].countS++;
-        }
-      }
-  
-      if (r.tipo === "comida" && r.food_name && r.quantity) {
-        resumo[r.data].alimentos.push(`${r.food_name} (${r.quantity}g)`);
-      }
-  
-      if (r.tipo === "medicamento" && r.medicamento && r.dose) {
-        resumo[r.data].medicamentos.push(`${r.medicamento} (${r.dose})`);
-      }
-    });
-  
+    const medias = calcularMedias();
     const html = `
       <html><head><meta charset='utf-8'><style>
-        body { font-family: Arial; padding: 20px; }
-        h1 { text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-        .registo { margin-top: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
-        .titulo { font-weight: bold; margin-bottom: 4px; }
+      body { font-family: Arial; padding: 20px; }
+      h1 { text-align: center; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
       </style></head><body>
-        <h1>Histórico de Registos</h1>
-  
-        <h2>Tabela Resumo</h2>
-        <table>
-          <thead>
+      <h1>Histórico de Registos</h1>
+      <table>
+        <thead><tr><th>Data</th><th>Média Glicose</th><th>Média Sono</th></tr></thead>
+        <tbody>
+          ${Object.entries(medias).map(([data, val]) => `
             <tr>
-              <th>Data</th>
-              <th>Média Glicose</th>
-              <th>Média Sono</th>
-              <th>Comida</th>
-              <th>Medicação</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${Object.entries(resumo).map(([data, val]) => {
-              const mediaGlicose = val.countG ? (val.totalGlicose / val.countG).toFixed(1) : "-";
-              const mediaSono = val.countS ? (val.totalSono / val.countS).toFixed(1) : "-";
-              const alimentos = val.alimentos.length ? val.alimentos.join(", ") : "-";
-              const medicamentos = val.medicamentos.length ? val.medicamentos.join(", ") : "-";
-  
-              return `
-                <tr>
-                  <td>${data}</td>
-                  <td>${mediaGlicose} mg/dL</td>
-                  <td>${mediaSono} h</td>
-                  <td>${alimentos}</td>
-                  <td>${medicamentos}</td>
-                </tr>`;
-            }).join("")}
-          </tbody>
-        </table>
-  
-        <h2 style="margin-top: 40px;">Histórico Completo</h2>
-        ${registros.map((r) => `
-          <div class="registo">
-            <div class="titulo">📅 ${r.data} — ${r.hora}</div>
-            <div><span class="titulo">Tipo:</span> ${r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1)}</div>
-            ${
-              r.tipo === "glicose" ? `<div><span class="titulo">Glicose:</span> ${r.valorGlicose} mg/dL</div>` :
-              r.tipo === "sono" ? `<div><span class="titulo">Sono:</span> ${r.detalhesSono}</div>` :
-              r.tipo === "comida" ? `
-                <div><span class="titulo">Alimento:</span> ${r.food_name}</div>
-                <div><span class="titulo">Quantidade:</span> ${r.quantity} g</div>
-                <div><span class="titulo">Calorias:</span> ${r.calories}</div>
-                <div><span class="titulo">Carboidratos:</span> ${r.carbs}</div>
-                <div><span class="titulo">Índice Glicémico:</span> ${r.glycemic_index}</div>
-                <div><span class="titulo">Impacto Glicémico:</span> ${r.glycemic_impact}</div>` :
-              r.tipo === "medicamento" ? `
-                <div><span class="titulo">Medicamento:</span> ${r.medicamento}</div>
-                <div><span class="titulo">Dose:</span> ${r.dose}</div>
-                <div><span class="titulo">Descrição:</span> ${r.descricao}</div>` :
-              ''
-            }
-          </div>
-        `).join("")}
-  
+              <td>${data}</td>
+              <td>${val.mediaGlicose.toFixed(1)} mg/dL</td>
+              <td>${val.mediaSono.toFixed(1)} h</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
       </body></html>
     `;
-  
-    try {
-      const { uri } = await Print.printToFileAsync({ html });
-      await Sharing.shareAsync(uri);
-    } catch (e) {
-      Alert.alert("Erro", "Erro ao gerar PDF");
-      console.error(e);
-    }
+    const { uri } = await Print.printToFileAsync({ html });
+    await Sharing.shareAsync(uri);
   };
+
   const calcularMedias = () => {
     const medias: Record<string, { totalGlicose: number; countG: number; totalSono: number; countS: number; mediaGlicose: number; mediaSono: number }> = {};
     registros.forEach((r) => {
@@ -304,18 +211,9 @@ export default function Explore() {
       val.mediaGlicose = val.countG ? val.totalGlicose / val.countG : 0;
       val.mediaSono = val.countS ? val.totalSono / val.countS : 0;
     });
-    
     return medias;
   };
-  const mostrarInsights = () => {
-    const insights = gerarInsights(registros);
-    if (insights.length === 0) {
-      Alert.alert("Insights", "Sem padrões significativos encontrados.");
-    } else {
-      Alert.alert("Insights", insights.join("\n\n"));
-    }
-  };
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Histórico</Text>
@@ -323,11 +221,6 @@ export default function Explore() {
       <TouchableOpacity style={styles.botao} onPress={exportarPDF}>
         <Text style={styles.textoBotao}>Exportar PDF</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.botao} onPress={mostrarInsights}>
-    <Text style={styles.textoBotao}>Opinião GlicoSleep</Text>
-      </TouchableOpacity>
-
 
       <Calendar
         onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
@@ -356,7 +249,7 @@ export default function Explore() {
                     <Text>🍽️ {selectedRegistro.food_name}</Text>
                     <Text>⚖️ Quantidade: {selectedRegistro.quantity}g</Text>
                     <Text>🔥 Calorias: {selectedRegistro.calories}</Text>
-                    <Text>🍞 Carbohidratos: {selectedRegistro.carbs}</Text>
+                    <Text>🍞 Carboidratos: {selectedRegistro.carbs}</Text>
                     <Text>📊 IG: {selectedRegistro.glycemic_index}</Text>
                     <Text>💡 Impacto: {selectedRegistro.glycemic_impact}</Text>
                   </>
@@ -371,7 +264,6 @@ export default function Explore() {
                   <>
                     <Text>💊 {selectedRegistro.medicamento}</Text>
                     <Text>Dose: {selectedRegistro.dose}</Text>
-                    <Text>📝 Descrição: {selectedRegistro.descricao}</Text>
                   </>
                 )}
               </>

@@ -82,7 +82,7 @@ export default function AnaliseComida() {
         glycemicLoad:  glycemicLoadNum,
         description:   glyImpact.description,
       };
-     
+      console.log('🍽️ Montando registro para inserção:', foodData);
 
       // 5) Atualiza estado local (para exibição)
       setMealData(prev => [...prev, foodData]);

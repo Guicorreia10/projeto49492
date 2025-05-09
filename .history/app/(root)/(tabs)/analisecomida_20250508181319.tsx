@@ -56,23 +56,18 @@ export default function AnaliseComida() {
     setIsAnalyzing(true);
 
     try {
-      console.log('🔍 Iniciando análise de imagem:', uri, 'quantidade:', quantity);
-
       // 1) Reconhece o alimento
       const foodName = await recognizeFoodWithClarifai(uri);
-      console.log('🤖 Alimento reconhecido:', foodName);
 
       // 2) Obtém dados nutricionais
       const nutrition = await getRealNutritionData(foodName, quantity);
       if (!nutrition) throw new Error('Não foi possível obter dados nutricionais.');
-      console.log('📊 Dados nutricionais:', nutrition);
 
       // 3) Calcula impacto glicêmico
-      const glyImpact       = calculateGlycemicImpact(nutrition);
+      const glyImpact      = calculateGlycemicImpact(nutrition);
       const glycemicLoadNum = parseFloat(glyImpact.glycemicLoad);
-      console.log('📈 Impacto glicêmico:', glyImpact);
 
-      // 4) Monta o objeto
+      // 4) Monta objecto
       const foodData: FoodData = {
         name:          foodName,
         quantity:      Number(quantity),
@@ -82,19 +77,17 @@ export default function AnaliseComida() {
         glycemicLoad:  glycemicLoadNum,
         description:   glyImpact.description,
       };
-     
 
-      // 5) Atualiza estado local (para exibição)
+      // 5) Atualiza estado local para UI
       setMealData(prev => [...prev, foodData]);
 
-      // 6) Grava na tabela `comida`
-      const { data: authData, error: authErr } = await supabase.auth.getUser();
-      console.log('🔑 supabase.auth.getUser():', authData, authErr);
-      const user = authData?.user;
+      // 6) Grava no Supabase
+      const { data, error: authErr } = await supabase.auth.getUser();
+      const user = data?.user;
       if (authErr || !user) throw new Error('Utilizador não autenticado.');
 
-      const { data: inserted, error: insertErr } = await supabase
-        .from('comida')             // <–– Aqui mudámos para a tabela `comida`
+      const { error: insertErr } = await supabase
+        .from('dados_usuario')
         .insert([{
           user_id:         user.id,
           food_name:       foodData.name,
@@ -103,17 +96,16 @@ export default function AnaliseComida() {
           carbs:           foodData.carbs,
           glycemic_index:  foodData.glycemicIndex,
           glycemic_impact: foodData.glycemicLoad,
-        }])
-        .select();
+        }]);
 
       if (insertErr) {
-        console.error('❌ Erro ao inserir na `comida`:', insertErr);
+        console.error('❌ Erro ao inserir:', insertErr);
         Alert.alert('Erro BD', insertErr.message);
       } else {
-        console.log('✅ Inserido com sucesso na `comida`:', inserted);
+        // opcional: feedback de sucesso
+        // Alert.alert('Sucesso', 'Análise gravada com sucesso!');
       }
     } catch (err: any) {
-      console.error('🚨 Falha na análise ou inserção:', err);
       Alert.alert('Erro', err.message || 'Falha ao analisar e gravar.');
     } finally {
       setIsAnalyzing(false);
@@ -178,17 +170,17 @@ export default function AnaliseComida() {
             {mealData.map((f, idx) => (
               <View key={idx} style={styles.result}>
                 <Text style={styles.info}>🍽️ {f.name}</Text>
-                <Text style={styles.info}>⚖️ Quantidade: {f.quantity} g</Text>
-                <Text style={styles.info}>🔥 {f.calories.toFixed(1)} Calorias</Text>
-                <Text style={styles.info}>🍞 {f.carbs.toFixed(1)} Carbohidratos</Text>
-                <Text style={styles.info}>📊 ÍndiceGlicémico: {f.glycemicIndex}</Text>
+                <Text style={styles.info}>⚖️ {f.quantity} g</Text>
+                <Text style={styles.info}>🔥 {f.calories.toFixed(1)} kcal</Text>
+                <Text style={styles.info}>🍞 {f.carbs.toFixed(1)} g carbs</Text>
+                <Text style={styles.info}>📊 IG: {f.glycemicIndex}</Text>
                 <Text style={styles.info}>💡 {f.description}</Text>
               </View>
             ))}
           </View>
         )}
 
-        {!isAnalyzing && mealData.length > 0 && (
+        {mealData.length > 0 && (
           <TouchableOpacity style={styles.clearButton} onPress={clearMeal}>
             <Text style={styles.buttonText}>Limpar Refeição</Text>
           </TouchableOpacity>
