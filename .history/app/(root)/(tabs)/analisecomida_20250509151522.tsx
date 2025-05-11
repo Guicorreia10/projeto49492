@@ -144,7 +144,6 @@ if (glycemicLoadNum >= 20) {
     setMealData([]);
     setImages([]);
     setQuantity('100');
-    setSugestoes([]); // ← limpa as sugestões também
   };
 
   return (

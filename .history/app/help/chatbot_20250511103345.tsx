@@ -1,3 +1,4 @@
+// app/help/chatbot.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
@@ -9,7 +10,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import Constants from 'expo-constants'; 
+
 
 type Message = { id: string; text: string; fromBot: boolean };
 type RoleMessage = { role: 'system' | 'user' | 'assistant'; content: string };
@@ -32,7 +33,8 @@ export default function Chatbot() {
     setMessages([
       {
         id: '1',
-        text: 'Olá! Sou o GlicoBot 🤖. Estou aqui para te ajudar em todas as tuas dúvidas.',
+        text:
+          'Olá! Sou o GlicoBot 🤖. Estou aqui para te ajudar em todas as tuas dùvidas.',
         fromBot: true,
       },
     ]);
@@ -45,6 +47,7 @@ export default function Chatbot() {
   const sendMessage = useCallback(async () => {
     if (!input.trim()) return;
 
+    // 1) bolha do utilizador
     const userMsg: Message = {
       id: Date.now().toString(),
       text: input,
@@ -52,6 +55,7 @@ export default function Chatbot() {
     };
     setMessages(prev => [...prev, userMsg]);
 
+    // 2) atualiza histórico
     const entry: RoleMessage = { role: 'user', content: input };
     const newHistory = [...history, entry];
     setHistory(newHistory);
@@ -60,19 +64,22 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      const apiKey = Constants.expoConfig?.extra?.OPENROUTER_API_KEY;
-
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: newHistory,
-        }),
-      });
+      console.log('🚀 sendMessage chamado, histórico:', newHistory);
+      const res = await fetch(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization:
+              'Bearer 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',
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: newHistory,
+          }),
+        }
+      );
 
       if (!res.ok) {
         const text = await res.text();
@@ -80,16 +87,20 @@ export default function Chatbot() {
       }
 
       const json = await res.json();
+      console.log('✅ Resposta da API:', json);
+
       const botContent =
         (json.choices?.[0]?.message?.content as string)?.trim() ||
         'Desculpa, não consegui gerar uma resposta.';
 
+      // 3) atualiza histórico
       const assistantEntry: RoleMessage = {
         role: 'assistant',
         content: botContent,
       };
       setHistory(prev => [...prev, assistantEntry]);
 
+      // 4) bolha do bot
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         text: botContent,

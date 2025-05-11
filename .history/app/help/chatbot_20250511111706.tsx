@@ -9,7 +9,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import Constants from 'expo-constants'; 
+import Constants from 'expo-constants'; // 👈 AQUI
 
 type Message = { id: string; text: string; fromBot: boolean };
 type RoleMessage = { role: 'system' | 'user' | 'assistant'; content: string };

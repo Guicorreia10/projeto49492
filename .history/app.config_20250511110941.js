@@ -11,8 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSBluetoothAlwaysUsageDescription": "Este app usa Bluetooth para conectar com seu smartwatch e medidor de glicose.",
-        "NSBluetoothPeripheralUsageDescription": "Precisamos do Bluetooth para conectar aos seus dispositivos de saúde."
+        "NSBluetoothAlwaysUsageDescription": "Este app usa Bluetooth para conectar com  smartwatch e medidor de glicose.",
+        "NSBluetoothPeripheralUsageDescription": "Precisamos do Bluetooth para conectar  dispositivos de saúde."
       }
     },
     "android": {
@@ -68,7 +68,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {
+       "OPENROUTER_API_KEY": "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",
         "origin": false
       },
       "eas": {
@@ -76,4 +76,4 @@
       }
     }
   }
-}
+

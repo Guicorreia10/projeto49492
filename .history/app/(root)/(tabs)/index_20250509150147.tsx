@@ -119,7 +119,6 @@ export default function Index() {
   if (!sessionChecked) {
     return <View style={{ flex: 1, backgroundColor: "#F0F8FF" }} />;
   }
-  
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -171,40 +170,39 @@ export default function Index() {
         ))}
 
         <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
-          <LineChart
-            data={{
-              labels: dias,
-              datasets: [
-                {
-                  data: dadosSono,
-                  color: () => "#4A90E2",
-                  strokeWidth: 2,
-                },
-                {
-                  data: dadosGlicose.map(g => g / 20), // Normalizando os valores
-                  color: () => "#E94E77",
-                  strokeWidth: 2,
-                },
-              ],
-              legend: ["Sono (0-10)", "Glicose (mg/dL) (normalizado)"],
-            }}
-            width={Dimensions.get("window").width - 40}
-            height={220}
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#fff",
-              color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-              labelColor: () => "#333",
-              propsForDots: {
-                r: "6",
-                strokeWidth: "2",
-                stroke: "#fff",
+        <LineChart
+          data={{
+            labels: dias,
+            datasets: [
+              {
+                data: dadosSono,
+                color: () => "#4A90E2",
+                strokeWidth: 2,
               },
-            }}
-            bezier
-            style={{ borderRadius: 12, marginVertical: 10 }}
-          />
-
+              {
+                data: dadosGlicose,
+                color: () => "#E94E77",
+                strokeWidth: 2,
+              },
+            ],
+            legend: ["Sono (0-10)", "Glicose (mg/dL)"],
+          }}
+          width={Dimensions.get("window").width - 40}
+          height={220}
+          chartConfig={{
+            backgroundGradientFrom: "#fff",
+            backgroundGradientTo: "#fff",
+            color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+            labelColor: () => "#333",
+            propsForDots: {
+              r: "6",
+              strokeWidth: "2",
+              stroke: "#fff",
+            },
+          }}
+          bezier
+          style={{ borderRadius: 12, marginVertical: 10 }}
+        />
       </ScrollView>
     </SafeAreaView>
   );

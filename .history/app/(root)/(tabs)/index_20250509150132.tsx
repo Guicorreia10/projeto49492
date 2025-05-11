@@ -119,20 +119,19 @@ export default function Index() {
   if (!sessionChecked) {
     return <View style={{ flex: 1, backgroundColor: "#F0F8FF" }} />;
   }
-  
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          
             <View>
               <Text style={styles.greeting}>Olá</Text>
               <Text style={styles.subGreeting}>Preparado para o dia de hoje?</Text>
             </View>
           </View>
           <Image source={icons.bell} style={styles.bellIcon} />
-        </View>
+      
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Resumo do Sono</Text>
@@ -171,40 +170,39 @@ export default function Index() {
         ))}
 
         <Text style={styles.sectionTitle}>Relação Sono x Glicose</Text>
-          <LineChart
-            data={{
-              labels: dias,
-              datasets: [
-                {
-                  data: dadosSono,
-                  color: () => "#4A90E2",
-                  strokeWidth: 2,
-                },
-                {
-                  data: dadosGlicose.map(g => g / 20), // Normalizando os valores
-                  color: () => "#E94E77",
-                  strokeWidth: 2,
-                },
-              ],
-              legend: ["Sono (0-10)", "Glicose (mg/dL) (normalizado)"],
-            }}
-            width={Dimensions.get("window").width - 40}
-            height={220}
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#fff",
-              color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-              labelColor: () => "#333",
-              propsForDots: {
-                r: "6",
-                strokeWidth: "2",
-                stroke: "#fff",
+        <LineChart
+          data={{
+            labels: dias,
+            datasets: [
+              {
+                data: dadosSono,
+                color: () => "#4A90E2",
+                strokeWidth: 2,
               },
-            }}
-            bezier
-            style={{ borderRadius: 12, marginVertical: 10 }}
-          />
-
+              {
+                data: dadosGlicose,
+                color: () => "#E94E77",
+                strokeWidth: 2,
+              },
+            ],
+            legend: ["Sono (0-10)", "Glicose (mg/dL)"],
+          }}
+          width={Dimensions.get("window").width - 40}
+          height={220}
+          chartConfig={{
+            backgroundGradientFrom: "#fff",
+            backgroundGradientTo: "#fff",
+            color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+            labelColor: () => "#333",
+            propsForDots: {
+              r: "6",
+              strokeWidth: "2",
+              stroke: "#fff",
+            },
+          }}
+          bezier
+          style={{ borderRadius: 12, marginVertical: 10 }}
+        />
       </ScrollView>
     </SafeAreaView>
   );

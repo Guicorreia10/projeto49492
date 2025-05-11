@@ -324,7 +324,7 @@ export default function Explore() {
   style={[styles.botao, { backgroundColor: "#10b981" }]}
   onPress={() => router.push("/insights/openrouter")}
 >
-  <Text style={styles.textoBotao}>Opinião GlicoSleep</Text>
+  <Text style={styles.textoBotao}>Gerar Insights com IA</Text>
 </TouchableOpacity>
 
       

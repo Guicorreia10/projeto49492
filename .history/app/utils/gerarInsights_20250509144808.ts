@@ -41,7 +41,7 @@ export function gerarInsights(registros: Registo[]): string[] {
   const varSem = calcularVariancia(glicoseSemMed);
 
   if (varCom < varSem - 5) {
-    insights.push(`Nos dias com insulina, a glicose é mais estável (var. ${varSem.toFixed(1)} ➝ ${varCom.toFixed(1)} mg/dL).`);
+    insights.push(`Nos dias com uso de insulina, a glicose é mais estável (var. ${varSem.toFixed(1)} ➝ ${varCom.toFixed(1)} mg/dL).`);
   }
 // Alimentos com IG > 55 → glicose mais alta?
 const regComida = registros.filter((r) => r.tipo === "comida" && r.glycemic_index !== undefined);

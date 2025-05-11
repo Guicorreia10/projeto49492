@@ -39,8 +39,6 @@ export default function AnaliseComida() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mealData, setMealData] = useState<FoodData[]>([]);
   const [quantity, setQuantity] = useState('100');
-  const [sugestoes, setSugestoes] = useState<string[]>([]);
-
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -81,13 +79,10 @@ let sugestoes: string[] = [];
 if (glycemicLoadNum >= 20) {
   sugestoes = sugerirAlternativas(foodName);
   if (sugestoes.length > 0) {
-    if (glycemicLoadNum >= 20) {
-  const alternativas = sugerirAlternativas(foodName);
-  setSugestoes(alternativas);
-} else {
-  setSugestoes([]);
-}
-
+    Alert.alert(
+      "Sugestão",
+      `Este alimento tem uma carga glicémica elevada.\nAlternativas mais leves: ${sugestoes.join(", ")}.`
+    );
   }
 }
 
@@ -144,7 +139,6 @@ if (glycemicLoadNum >= 20) {
     setMealData([]);
     setImages([]);
     setQuantity('100');
-    setSugestoes([]); // ← limpa as sugestões também
   };
 
   return (
@@ -208,15 +202,6 @@ if (glycemicLoadNum >= 20) {
             ))}
           </View>
         )}
-        {sugestoes.length > 0 && (
-  <View style={styles.card}>
-    <Text style={styles.cardTitle}>🍏 Alternativas Mais Leves</Text>
-    {sugestoes.map((item, idx) => (
-      <Text key={idx} style={styles.info}>• {item}</Text>
-    ))}
-  </View>
-)}
-
 
         {!isAnalyzing && mealData.length > 0 && (
           <TouchableOpacity style={styles.clearButton} onPress={clearMeal}>

@@ -119,7 +119,6 @@ export default function Index() {
   if (!sessionChecked) {
     return <View style={{ flex: 1, backgroundColor: "#F0F8FF" }} />;
   }
-  
 
   return (
     <SafeAreaView style={styles.safeArea}>

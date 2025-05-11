@@ -15,7 +15,7 @@ import { supabase } from "../../../lib/supabase";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Link } from "expo-router";
 
 
 
@@ -44,7 +44,6 @@ export default function Explore() {
   const [selectedRegistro, setSelectedRegistro] = useState<Registo | null>(null);
   const [modalVisivel, setModalVisivel] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const router = useRouter();
 
   useEffect(() => {
     const carregarTodos = async () => {
@@ -145,8 +144,6 @@ export default function Explore() {
         icon = <FontAwesome5 name="pills" size={16} color="white" />;
         bg = "#eab308";
     }
-   
-
 
     return (
       <TouchableOpacity
@@ -320,14 +317,13 @@ export default function Explore() {
       <TouchableOpacity style={styles.botao} onPress={exportarPDF}>
         <Text style={styles.textoBotao}>Exportar PDF</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-  style={[styles.botao, { backgroundColor: "#10b981" }]}
-  onPress={() => router.push("/insights/openrouter")}
->
-  <Text style={styles.textoBotao}>Opinião GlicoSleep</Text>
-</TouchableOpacity>
-
       
+      
+<Link href="/insights/openrouter" asChild>
+  <TouchableOpacity style={[styles.botao, { backgroundColor: "#10b981" }]}>
+    <Text style={styles.textoBotao}>Ver insights com IA</Text>
+  </TouchableOpacity>
+</Link>
 
 
       <Calendar
