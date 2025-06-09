@@ -24,7 +24,7 @@ export default function OpenRouterInsightsScreen() {
         const dados: Registo[] = [];
 
         const { data: dso } = await supabase
-          .from("dados_usuario")
+          .from("dados_utilizador")
           .select("id, created_at, glicose, sono")
           .order("created_at", { ascending: false });
 

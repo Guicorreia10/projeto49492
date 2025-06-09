@@ -14,7 +14,7 @@ const EvaluateSleepScreen = () => {
     const fetchSleepData = async () => {
       try {
         const { data, error } = await supabase
-          .from('dados_usuario')
+          .from('dados_utilizador')
           .select('sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos')
           .order('created_at', { ascending: false })
           .limit(1); // Busca apenas os dados mais recentes

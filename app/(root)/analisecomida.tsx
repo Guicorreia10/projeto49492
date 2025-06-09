@@ -15,13 +15,13 @@ import {
   ScrollView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import {
   recognizeFoodWithClarifai,
   getRealNutritionData,
   calculateGlycemicImpact,
-} from '../../utils/utils';
-import { sugerirAlternativas } from '../../utils/sugestoes';
+} from '../utils/utils';
+import { sugerirAlternativas } from '../utils/sugestoes';
 
 
 interface FoodData {
@@ -238,9 +238,15 @@ const styles = StyleSheet.create({
   container:       { flex: 1, backgroundColor: '#f8fafc', paddingTop: 30 },
   scroll:          { alignItems: 'center', padding: 20, paddingBottom: 100 },
   title:           { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 20 },
+
   button:          { backgroundColor: '#3b82f6', padding: 14, borderRadius: 12, marginVertical: 10 },
-  buttonText:      { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
+
+  buttonText:      { color: '#fff',
+     fontSize: 16, fontWeight: 'bold',
+      textAlign: 'center' },
+
   clearButton:     { backgroundColor: '#ef4444', padding: 14, borderRadius: 12, marginTop: 20 },
+
   image:           { width: 220, height: 220, borderRadius: 12, marginVertical: 10 },
   imagesContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   label:           { fontSize: 16, fontWeight: '600', marginTop: 10, color: '#333' },

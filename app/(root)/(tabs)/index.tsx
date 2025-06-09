@@ -22,12 +22,21 @@ export default function Index() {
   const [glucoseValue, setGlucoseValue] = useState<number | null>(null);
   const [glucoseMessage, setGlucoseMessage] = useState<string>("A carregar...");
   const [cronotipo, setCronotipo] = useState<{ pontuacao: number; tipo: string } | null>(null);
+  const [desafioConcluido, setDesafioConcluido] = useState(false);
+  const [mostrarModalDesafio, setMostrarModalDesafio] = useState(false);
+
 
   const [smartwatchData, setSmartwatchData] = useState<{
     passos?: string;
     exercicio?: string;
     sono?: string;
   } | null>(null);
+  const [sonoPitt, setSonoPitt] = useState<{
+  pontuacao: number;
+  classificacao: string;
+  data_resposta: string;
+} | null>(null);
+
 
   const [challenges, setChallenges] = useState([
     { id: 2, text: "💧 Beber 8 copos de água hoje", completed: false },
@@ -66,9 +75,22 @@ export default function Index() {
         if (authError || !authData?.user) throw authError;
 
         const userId = authData.user.id;
+        // Buscar resultado do questionário de qualidade de sono (quest_pitt)
+      const { data: resultadoSonoPitt, error: erroSonoPitt } = await supabase
+        .from("quest_pitt")
+        .select("pontuacao, classificacao, data_resposta")
+        .eq("id", userId)
+        .order("data_resposta", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!erroSonoPitt && resultadoSonoPitt) {
+        setSonoPitt(resultadoSonoPitt);
+      }
+
 
         const { data, error } = await supabase
-          .from("dados_usuario")
+          .from("dados_utilizador")
           .select("sono, qualidade_sono, dificuldade_ao_dormir, uso_dispositivos, glicose")
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
@@ -192,21 +214,49 @@ export default function Index() {
           <Image source={icons.bell} style={styles.bellIcon} />
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Resumo do Sono</Text>
-          <Text style={styles.cardValue}>
-            {sleepEvaluation !== null ? `${sleepEvaluation} / 10` : "A carregar..."}
-          </Text>
-          <Text style={styles.cardText}>{sleepMessage}</Text>
-        </View>
+       
+ <View style={styles.cardRow}>
+  {/* Resumo do Sono */}
+  <View style={styles.sonoBox}>
+    <Text style={styles.cardTitleSmall}>Resumo do Sono</Text>
+    <Text style={styles.cardValueSmall}>
+      {sleepEvaluation !== null ? `${sleepEvaluation} / 10` : "A carregar..."}
+    </Text>
+    <Text style={styles.cardTextSmall}>{sleepMessage}</Text>
+  </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Glicose Atual</Text>
-          <Text style={styles.cardValue}>
-            {glucoseValue !== null ? `${glucoseValue} mg/dL` : "A carregar..."}
-          </Text>
-          <Text style={styles.cardText}>{glucoseMessage}</Text>
-        </View>
+  {/* Botão Análise de Comida */}
+  <TouchableOpacity style={styles.foodButton} onPress={() => router.push("/analisecomida")}>
+  <View style={styles.foodContent}>
+    <Text style={styles.foodIcon}>🥗</Text>
+    <Text style={styles.foodLabel}>Análise Alimentar</Text>
+  </View>
+</TouchableOpacity>
+
+</View>
+
+
+
+
+        <View style={styles.cardRow}>
+  {/* Glicose Atual */}
+  <View style={styles.glicoseBox}>
+    <Text style={styles.cardTitleSmall}>Glicose Atual</Text>
+    <Text style={styles.cardValueSmall}>
+      {glucoseValue !== null ? `${glucoseValue} mg/dL` : "A carregar..."}
+    </Text>
+    <Text style={styles.cardTextSmall}>{glucoseMessage}</Text>
+  </View>
+
+  {/* Desafio do Dia */}
+<TouchableOpacity style={styles.challengeButtonCard} onPress={() => router.push("/desafio")}>
+  <View style={styles.challengeContent}>
+    <Text style={styles.challengeEmoji}>💧</Text>
+    <Text style={styles.challengeText}>Desafios Diários</Text>
+  </View>
+</TouchableOpacity>
+
+</View>
 
         {smartwatchData && (
           <View style={styles.card}>
@@ -219,25 +269,7 @@ export default function Index() {
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Desafio do Dia</Text>
-        {challenges.map((c) => (
-          <View key={c.id} style={styles.challengeCard}>
-            <Text style={styles.challengeIcon}>{c.text.split(" ")[0]}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.challengeTitle}>{c.text.replace(/^.{2}\s/, "")}</Text>
-              <TouchableOpacity
-                onPress={() => toggleChallenge(c.id)}
-                style={[styles.challengeButton, c.completed && styles.challengeButtonCompleted]}
-              >
-                <Text
-                  style={[styles.challengeButtonText, c.completed && styles.challengeButtonTextCompleted]}
-                >
-                  {c.completed ? "Concluído ✅" : "Concluir"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+       
 
         <Text style={styles.sectionTitle}>Sono x Glicose</Text>
         <LineChart
@@ -295,10 +327,59 @@ export default function Index() {
             <Text style={styles.botaoCronotipoTexto}>📝 Fazer Questionário de Cronotipo</Text>
           </TouchableOpacity>
         )}
-<TouchableOpacity style={styles.botaoCronotipo} onPress={() => router.push("../(root)/quali_sono")}>
-            <Text style={styles.botaoCronotipoTexto}> Fazer Questionário Qualidade do Sono</Text>
-          </TouchableOpacity>
+<Text style={styles.sectionTitle}>Qualidade do Sono (PSQI)</Text>
+
+{sonoPitt ? (
+  <View style={styles.card}>
+    <Text style={styles.cardTitle}>🛏️ Resultado do Questionário</Text>
+    <Text style={styles.cardValue}>{sonoPitt.pontuacao} pontos</Text>
+    <Text style={styles.cardText}>Classificação: {sonoPitt.classificacao}</Text>
+    <Text style={styles.cardText}>
+      Respondido em: {new Date(sonoPitt.data_resposta).toLocaleDateString("pt-PT")}
+    </Text>
+    <TouchableOpacity
+      style={styles.botaoCronotipo}
+      onPress={() => router.push("../(root)/quali_sono")}
+    >
+      <Text style={styles.botaoCronotipoTexto}>🔁 Refazer Questionário</Text>
+    </TouchableOpacity>
+  </View>
+) : (
+  <TouchableOpacity
+    style={styles.botaoCronotipo}
+    onPress={() => router.push("../(root)/quali_sono")}
+  >
+    <Text style={styles.botaoCronotipoTexto}>📝 Fazer Questionário Qualidade do Sono</Text>
+  </TouchableOpacity>
+)}
+
       </ScrollView>
+      {mostrarModalDesafio && (
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContainer}>
+      <Text style={styles.modalTitle}>💧 Desafio do Dia</Text>
+      <Text style={styles.modalText}>Beber 8 copos de água hoje</Text>
+
+      <TouchableOpacity
+        style={[
+          styles.modalButton,
+          desafioConcluido ? styles.modalButtonDone : null,
+        ]}
+        onPress={() => setDesafioConcluido(true)}
+        disabled={desafioConcluido}
+      >
+        <Text style={styles.modalButtonText}>
+          {desafioConcluido ? "✅ Desafio Concluído" : "Marcar como Concluído"}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => setMostrarModalDesafio(false)}>
+        <Text style={styles.modalClose}>Fechar</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+)}
+
     </SafeAreaView>
   );
 }
@@ -384,5 +465,198 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+ cardTitleRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 5,
+},
+foodButtonText: {
+  color: "#007AFF",
+  fontWeight: "600",
+  fontSize: 13,
+},
+cardRow: {
+  flexDirection: "row",
+  backgroundColor: "#fff",
+  borderRadius: 16,
+  padding: 16,
+  marginBottom: 20,
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowOffset: { width: 0, height: 2 },
+  shadowRadius: 6,
+  elevation: 4,
+},
+
+sonoBox: {
+  flex: 1,
+  paddingRight: 12,
+  borderRightWidth: 1,
+  borderRightColor: "#eee",
+},
+
+foodBox: {
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  paddingLeft: 12,
+},
+
+cardTitleSmall: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#08457E",
+},
+
+cardValueSmall: {
+  fontSize: 28,
+  fontWeight: "700",
+  color: "#007AFF",
+  marginTop: 6,
+},
+
+cardTextSmall: {
+  fontSize: 13,
+  color: "#666",
+  marginTop: 4,
+},
+
+foodIcon: {
+  fontSize: 32,
+  marginBottom: 6,
+},
+
+foodLabel: {
+  fontSize: 15,
+  fontWeight: "600",
+  color: "#4f46e5",
+},
+foodButton: {
+  flex: 1,
+  backgroundColor: "#E6F0FF",
+  paddingVertical: 18,
+  paddingHorizontal: 12,
+  borderRadius: 12,
+  alignItems: "center",
+  justifyContent: "center",
+  marginLeft: 12,
+  shadowColor: "#000",
+  shadowOpacity: 0.1,
+  shadowOffset: { width: 0, height: 2 },
+  shadowRadius: 4,
+  elevation: 3,
+},
+
+foodContent: {
+  alignItems: "center",
+},
+glicoseBox: {
+  flex: 1,
+  paddingRight: 12,
+  borderRightWidth: 1,
+  borderRightColor: "#eee",
+},
+
+challengeButtonCard: {
+  flex: 1,
+  backgroundColor: "#E8F8F5",
+  paddingVertical: 18,
+  paddingHorizontal: 12,
+  borderRadius: 12,
+  alignItems: "center",
+  justifyContent: "center",
+  marginLeft: 12,
+  shadowColor: "#000",
+  shadowOpacity: 0.1,
+  shadowOffset: { width: 0, height: 2 },
+  shadowRadius: 4,
+  elevation: 3,
+},
+
+challengeContent: {
+  alignItems: "center",
+},
+
+challengeEmoji: {
+  fontSize: 32,
+  marginBottom: 6,
+},
+
+challengeText: {
+  fontSize: 15,
+  fontWeight: "600",
+  color: "#1A7F64",
+},
+modalOverlay: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 999,
+},
+
+modalContainer: {
+  width: "80%",
+  backgroundColor: "#fff",
+  padding: 20,
+  borderRadius: 12,
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 10,
+},
+
+modalTitle: {
+  fontSize: 20,
+  fontWeight: "700",
+  color: "#08457E",
+  marginBottom: 10,
+},
+
+modalText: {
+  fontSize: 16,
+  color: "#555",
+  marginBottom: 20,
+  textAlign: "center",
+},
+
+modalButton: {
+  backgroundColor: "#007AFF",
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 10,
+  marginBottom: 12,
+},
+
+modalButtonDone: {
+  backgroundColor: "#4CAF50",
+},
+
+modalButtonText: {
+  color: "#fff",
+  fontWeight: "600",
+  fontSize: 16,
+},
+
+modalClose: {
+  color: "#007AFF",
+  fontSize: 14,
+  marginTop: 8,
+},
+
+
+
+
+
+
+
+
 
 });

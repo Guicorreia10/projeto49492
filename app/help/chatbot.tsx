@@ -71,8 +71,7 @@ export default function Chatbot() {
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
           messages: newHistory,
-          max_tokens: 300,
-        }),
+                 }),
       });
 
       if (!res.ok) {

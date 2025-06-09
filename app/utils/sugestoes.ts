@@ -5,11 +5,11 @@ export function sugerirAlternativas(foodName: string): string[] {
   "white bread": ["pão de sementes", "pão escuro", "galetes de arroz sem sal"],
 
   // Arroz
-  "rice": ["arroz integral", "arroz basmati", "quinoa", "bulgur", "cevada", "couve-flor ralada", "millet"],
+  "rice": ["arroz integral", "arroz basmati", "quinoa", "bulgur", "cevada", "couve-flor ralada", "milho"],
   "white rice": ["arroz selvagem", "arroz vermelho", "quinoa", "lentilhas cozidas"],
 
   // Batata
-  "potato": ["batata-doce", "abóbora assada", "cenoura cozida", "inhame", "nabo", "pastinaca"],
+  "potato": ["batata-doce", "abóbora assada", "cenoura cozida", "inhame", "nabo", "cherovia"],
   "mashed potato": ["puré de couve-flor", "puré de abóbora", "puré de cenoura", "puré de batata-doce"],
 
   // Massa
@@ -28,8 +28,8 @@ export function sugerirAlternativas(foodName: string): string[] {
   "milkshake": ["batido de banana com leite vegetal", "smoothie de frutos vermelhos e iogurte grego"],
 
   // Gelados e sobremesas
-  "ice cream": ["gelado de banana congelada", "iogurte grego com frutos vermelhos", "sorvete de manga natural"],
-  "chocolate": ["chocolate negro 85%", "tâmaras recheadas com nozes", "amêndoas com cacau amargo"],
+  "ice cream": ["gelado de banana congelada", "iogurte grego sem açúcar com frutos vermelhos", "gelado de manga natural"],
+  "chocolate": ["chocolate negro 85%", "tâmaras recheadas com nozes", "amêndoas com cacau 85%"],
 
   // Pizza e fast food
   "pizza": ["pizza de base de couve-flor", "pizza de beringela", "pizza de wrap integral"],

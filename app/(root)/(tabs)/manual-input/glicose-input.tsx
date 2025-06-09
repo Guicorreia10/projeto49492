@@ -35,7 +35,7 @@ const GlicoseInputScreen = () => {
 
     try {
       // Registar os dados no Supabase
-      const { data, error } = await supabase.from('dados_usuario').insert([
+      const { data, error } = await supabase.from('dados_utilizador').insert([
         {
           user_id: userId, 
           glicose: Number(glucoseLevel), // Nível de glicose inserido pelo utilizador

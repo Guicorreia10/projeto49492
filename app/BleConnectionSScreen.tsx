@@ -15,16 +15,22 @@ import { supabase } from '../lib/supabase';
 import { Buffer } from 'buffer';
 global.Buffer = Buffer;
 
-const SERVICE_UUID_STEPS = '0000180f-0000-1000-8000-00805f9b34fb';
-const CHAR_UUID_STEPS = '00002a19-0000-1000-8000-00805f9b34fb';
-const SERVICE_UUID_EXTRA = '000055ff-0000-1000-8000-00805f9b34fb';
-const CHAR_UUID_SLEEP = '000033f1-0000-1000-8000-00805f9b34fb';
-const CHAR_UUID_EXERCISE = '0000b003-0000-1000-8000-00805f9b34fb';
+const SERVICE_HAYLOU = '0000d0ff-3c17-d293-8e48-14fe2e4da212';
+const CHAR_PASSOS = '0000ffd2-0000-1000-8000-00805f9b34fb';
+const CHAR_SONO = '0000ffd3-0000-1000-8000-00805f9b34fb';
+const CHAR_EXERCICIO = '0000ffd4-0000-1000-8000-00805f9b34fb';
+
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 export default function BLEConnectionsScreen() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [passos, setPassos] = useState<number | null>(null);
+  const [sono, setSono] = useState<number | null>(null);
+  const [exercicio, setExercicio] = useState<number | null>(null);
   const scanTimeout = useRef<NodeJS.Timeout | null>(null);
   const managerRef = useRef(new BleManager());
   const router = useRouter();
@@ -51,12 +57,17 @@ export default function BLEConnectionsScreen() {
       if (!ok) {
         Alert.alert('Permissões', 'É necessário conceder permissões de localização e Bluetooth.');
       }
+      return ok;
     }
+    return true;
   };
 
   const startScan = () => {
     if (isScanning) return;
     setDevices([]);
+    setPassos(null);
+    setSono(null);
+    setExercicio(null);
     setIsScanning(true);
     managerRef.current.startDeviceScan(null, { allowDuplicates: false }, onDeviceDiscovered);
     if (scanTimeout.current) clearTimeout(scanTimeout.current);
@@ -73,15 +84,22 @@ export default function BLEConnectionsScreen() {
   };
 
   const onDeviceDiscovered = (error: BleError | null, device: Device | null) => {
-    if (error) {
-      Alert.alert('Erro BLE', error.message);
-      stopScan();
-      return;
-    }
-    if (device && device.name) {
-      setDevices(prev => (prev.some(d => d.id === device.id) ? prev : [...prev, device]));
-    }
-  };
+  if (error) {
+    Alert.alert('Erro BLE', error.message);
+    stopScan();
+    return;
+  }
+
+  // Adiciona apenas dispositivos com nome visível e únicos
+  if (device?.name && device.id) {
+    setDevices(prevDevices => {
+      const exists = prevDevices.some(d => d.id === device.id);
+      return exists ? prevDevices : [...prevDevices, device];
+    });
+  }
+};
+
+
 
   const handleConnectAndFetch = async (device: Device) => {
     if (isProcessing) return;
@@ -97,32 +115,35 @@ export default function BLEConnectionsScreen() {
         await connected.discoverAllServicesAndCharacteristics();
       }
 
-      const readUInt = async (service: string, char: string, nome: string) => {
-        try {
-          const res = await connected.readCharacteristicForService(service, char);
-          const buf = Buffer.from(res.value || "", "base64");
-          const val = buf.readUIntLE(0, Math.min(4, buf.length));
-          console.log(`📖 ${nome}: ${val}`);
-          return val;
-        } catch (err: any) {
-          console.warn(`❌ Erro ao ler ${nome}:`, err.message);
-          return 0;
-        }
+      await delay(3000); // atraso de 3 segundos para garantir atualização de dados no smartwatch
+
+      const readBuffer = async (charUUID: string): Promise<Buffer> => {
+        const res = await connected.readCharacteristicForService(SERVICE_HAYLOU, charUUID);
+        const buf = Buffer.from(res.value || '', 'base64');
+        return buf;
       };
 
-      const passos = await readUInt(SERVICE_UUID_STEPS, CHAR_UUID_STEPS, "Passos");
-      const sono = await readUInt(SERVICE_UUID_EXTRA, CHAR_UUID_SLEEP, "Sono (min)");
-      const exercicio = await readUInt(SERVICE_UUID_EXTRA, CHAR_UUID_EXERCISE, "Exercício (min)");
+      const passosBuf = await readBuffer(CHAR_PASSOS);
+      const sonoBuf = await readBuffer(CHAR_SONO);
+      const exercicioBuf = await readBuffer(CHAR_EXERCICIO);
+
+      const passosVal = passosBuf.length >= 3 ? passosBuf[2] & 0x1F : 0;
+      const sonoVal = sonoBuf.length >= 1 ? sonoBuf[0] & 0x1F : 0;
+      const exercicioVal = exercicioBuf.length >= 1 ? exercicioBuf[0] & 0x1F : 0;
+
+      setPassos(passosVal);
+      setSono(sonoVal);
+      setExercicio(exercicioVal);
 
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
       if (!userId) throw new Error("Utilizador não autenticado");
 
       const registos = [
-        { tipo: "passos", valor: passos || 0, unidade: "unidades" },
-        { tipo: "sono", valor: sono || 0, unidade: "minutos" },
-        { tipo: "exercicio", valor: exercicio || 0, unidade: "minutos" },
-      ].filter(r => typeof r.valor === "number" && !isNaN(r.valor));
+        { tipo: "passos", valor: passosVal, unidade: "unidades" },
+        { tipo: "sono", valor: sonoVal, unidade: "minutos" },
+        { tipo: "exercicio", valor: exercicioVal, unidade: "minutos" },
+      ];
 
       const { error } = await supabase.from("dados_smartwatch").insert(
         registos.map(r => ({ ...r, user_id: userId }))
@@ -130,7 +151,7 @@ export default function BLEConnectionsScreen() {
 
       if (error) throw error;
 
-      Alert.alert("✅ Sucesso", `Passos: ${passos}\nSono: ${sono} min\nExercício: ${exercicio} min`);
+      Alert.alert("✅ Sucesso", `Passos: ${passosVal}\nSono: ${sonoVal} min\nExercício: ${exercicioVal} min`);
     } catch (err: any) {
       console.error("Erro:", err);
       Alert.alert("Erro", err.message || "Erro ao processar dispositivo.");
@@ -142,10 +163,19 @@ export default function BLEConnectionsScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Dispositivos Bluetooth</Text>
-      <Text style={styles.status}>{isScanning ? 'A escanear...' : 'Scan parado'}</Text>
+      <Text style={styles.status}>{isScanning ? 'A fazer scan...' : 'Scan parado'}</Text>
+
+      {(passos !== null || sono !== null || exercicio !== null) && (
+        <View style={styles.dataBox}>
+          <Text style={styles.dataText}>👣 Passos: {passos ?? '---'}</Text>
+          <Text style={styles.dataText}>🛌 Sono: {sono ?? '---'} minutos</Text>
+          <Text style={styles.dataText}>💪 Exercício: {exercicio ?? '---'} minutos</Text>
+        </View>
+      )}
+
       <FlatList
         data={devices}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => item.id + '-' + index}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.item, isProcessing && { opacity: 0.5 }]}
@@ -158,6 +188,7 @@ export default function BLEConnectionsScreen() {
         )}
         ListEmptyComponent={() => <Text style={styles.empty}>Nenhum dispositivo encontrado</Text>}
       />
+
       <View style={styles.buttonsRow}>
         <TouchableOpacity
           style={[styles.scanButton, isScanning && styles.disabled]}
@@ -174,6 +205,7 @@ export default function BLEConnectionsScreen() {
           <Text style={styles.scanText}>Parar Scan</Text>
         </TouchableOpacity>
       </View>
+
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backText}>⬅️ Voltar</Text>
       </TouchableOpacity>
@@ -196,4 +228,6 @@ const styles = StyleSheet.create({
   scanText: { color: '#fff', fontWeight: 'bold' },
   backButton: { marginTop: 20, alignItems: 'center' },
   backText: { color: '#007AFF', fontSize: 16 },
+  dataBox: { marginBottom: 15, padding: 16, backgroundColor: '#E6F7FF', borderRadius: 10 },
+  dataText: { fontSize: 16, color: '#333', marginBottom: 6 },
 });

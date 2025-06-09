@@ -302,7 +302,7 @@ const CronotipoScreen = () => {
 
         <TouchableOpacity style={styles.botaoFinalizar} onPress={calcularResultado} disabled={submetido}>
           <Text style={styles.botaoFinalizarTexto}>
-            {submetido ? 'Resultado Enviado' : 'Ver Resultado'}
+            {submetido ? 'Resultado Enviado' : 'Calcular Resultado'}
           </Text>
         </TouchableOpacity>
 

@@ -66,16 +66,7 @@ const TabsLayout = () => {
             ),
           }}
         />
-        <Tabs.Screen
-          name="analisecomida"
-          options={{
-            title: 'Análise Comida',
-            headerShown: false,
-            tabBarIcon: ({ focused }) => (
-              <TabIcon icon={icons.search} focused={focused} title="Análise" />
-            ),
-          }}
-        />
+       
         <Tabs.Screen
           name="conectar"
           options={{

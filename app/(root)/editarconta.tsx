@@ -10,24 +10,30 @@ const EditarConta = () => {
   const [userId, setUserId] = useState<string | null>(null);
 
   const fetchUserData = async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data?.user) {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !authData?.user) {
+      console.log("Erro auth:", authError);
       Alert.alert("Erro", "Não foi possível obter os dados do utilizador.");
+      setLoading(false);
       return;
     }
 
-    setUserId(data.user.id);
-    setEmail(data.user.email || "");
+    console.log("authData:", authData);
+    setUserId(authData.user.id);
+    setEmail(authData.user.email || "");
 
-    // Buscar o nome completo da tabela dados_usuario
     const { data: dados, error: dadosErro } = await supabase
-      .from("dados_usuario")
+      .from("dados_utilizador")
       .select("nome_completo")
-      .eq("user_id", data.user.id)
-      .single();
+      .eq("user_id", authData.user.id)
+      .maybeSingle();
+
+    console.log("dados:", dados);
+    console.log("dadosErro:", dadosErro);
 
     if (dadosErro) {
-      Alert.alert("Erro", "Erro ao carregar dados do utilizador.");
+      Alert.alert("Erro", dadosErro.message || "Erro ao carregar dados do utilizador.");
     } else {
       setNome(dados?.nome_completo || "");
     }
@@ -41,7 +47,7 @@ const EditarConta = () => {
     setLoading(true);
 
     const { error } = await supabase
-      .from("dados_usuario")
+      .from("dados_utilizador")
       .update({ nome_completo: nome })
       .eq("user_id", userId);
 
@@ -50,6 +56,7 @@ const EditarConta = () => {
     setLoading(false);
 
     if (error || emailError) {
+      console.log("Update error:", error || emailError);
       Alert.alert("Erro", "Erro ao atualizar os dados.");
     } else {
       Alert.alert("Sucesso", "Dados atualizados com sucesso!");

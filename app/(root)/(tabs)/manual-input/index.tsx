@@ -2,32 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 // Ajusta este caminho se a tua pasta ble estiver noutro lugar
-import { scanForWatch } from '../../../ble/scan';
 
-import { connectToWatch } from '../../../ble/connect';
-import type { Device } from 'react-native-ble-plx';
+
 
 const ManualInputScreen: React.FC = () => {
   const router = useRouter();
 
-  // Estado para mostrar status do BLE
-  const [bleStatus, setBleStatus] = useState<string>('BLE parado');
 
-  const handleBLEScan = () => {
-    setBleStatus('Procurando smartwatch…');
-    scanForWatch(async (device: Device) => {
-      setBleStatus(`Conectando a ${device.name || device.id}…`);
-      try {
-        const connected = await connectToWatch(device);
-        setBleStatus(`Conectado a ${device.name || device.id}`);
-        // Aqui poderias iniciar monitorChar() para ler dados em tempo real
-      } catch (err) {
-        console.warn(err);
-        setBleStatus('Erro na conexão BLE');
-      }
-    });
-  };
-
+ 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Selecione o tipo de dados a inserir:</Text>

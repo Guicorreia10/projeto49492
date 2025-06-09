@@ -46,82 +46,118 @@ export default function Explore() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const router = useRouter();
 
-  useEffect(() => {
-    const carregarTodos = async () => {
-      try {
-        const { data: dso, error: err1 } = await supabase
-          .from("dados_usuario")
-          .select("id, created_at, glicose, sono")
-          .order("created_at", { ascending: false });
+ useEffect(() => {
+  let mounted = true;
 
-        const { data: comida, error: err2 } = await supabase
-          .from("comida")
-          .select("id, created_at, food_name, quantity, calories, carbs, glycemic_index, glycemic_impact")
-          .order("created_at", { ascending: false });
+  const carregarTodos = async () => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user?.id) return;
 
-        const { data: meds, error: err3 } = await supabase
-          .from("medicamentos")
-          .select("id, created_at, tipo, quantidade, descricao")
-          .order("created_at", { ascending: false });
+      const userId = auth.user.id;
 
-        if (err1 || err2 || err3) throw err1 || err2 || err3;
+      const { data: dso } = await supabase
+        .from("dados_utilizador")
+        .select("id, created_at, glicose, sono")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
 
-        const reg1: Registo[] = (dso || []).map((r) => {
-          const dt = new Date(r.created_at);
-          return {
-            id: r.id,
-            data: dt.toISOString().split("T")[0],
-            dia: dt.toLocaleDateString("pt-PT", { weekday: "short" }),
-            hora: dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            tipo: r.glicose ? "glicose" : "sono",
-            valorGlicose: r.glicose?.toString(),
-            detalhesSono: r.sono ? `${r.sono} horas de sono` : undefined,
-          };
-        });
+      const { data: comida } = await supabase
+        .from("comida")
+        .select("id, created_at, food_name, quantity, calories, carbs, glycemic_index, glycemic_impact")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
 
-        const reg2: Registo[] = (comida || []).map((r) => {
-          const dt = new Date(r.created_at);
-          return {
-            id: r.id,
-            data: dt.toISOString().split("T")[0],
-            dia: dt.toLocaleDateString("pt-PT", { weekday: "short" }),
-            hora: dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            tipo: "comida",
-            food_name: r.food_name,
-            quantity: r.quantity,
-            calories: r.calories,
-            carbs: r.carbs,
-            glycemic_index: r.glycemic_index,
-            glycemic_impact: r.glycemic_impact,
-          };
-        });
+      const { data: meds } = await supabase
+        .from("medicamentos")
+        .select("id, created_at, tipo, quantidade, descricao")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
 
-        const reg3: Registo[] = (meds || []).map((r) => {
-          const dt = new Date(r.created_at);
-          return {
-            id: r.id,
-            data: dt.toISOString().split("T")[0],
-            dia: dt.toLocaleDateString("pt-PT", { weekday: "short" }),
-            hora: dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            tipo: "medicamento",
-            medicamento: r.tipo,
-            dose: r.quantidade,
-            descricao: r.descricao,
-                      };
-        });
+      if (!mounted) return;
 
-        const todos = [...reg1, ...reg2, ...reg3].sort((a, b) =>
-          new Date(`${b.data}T${b.hora}`).getTime() - new Date(`${a.data}T${a.hora}`).getTime()
-        );
+     const reg1: Registo[] = (dso || []).map((r) => {
+  const dt = new Date(r.created_at);
+  return {
+    id: r.id,
+    data: dt.toISOString().split("T")[0],
+    dia: dt.toLocaleDateString("pt-PT", { weekday: "short" }),
+    hora: dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    tipo: r.glicose ? "glicose" as const : "sono" as const,
+    valorGlicose: r.glicose?.toString(),
+    detalhesSono: r.sono ? `${r.sono} horas de sono` : undefined,
+  };
+});
 
-        setRegistros(todos);
-      } catch (err: any) {
-        console.error("Erro ao carregar dados:", err);
-        Alert.alert("Erro", err.message || "Falha ao carregar histórico.");
-      }
-    };
-    carregarTodos();
-  }, []);
+const reg2: Registo[] = (comida || []).map((r) => {
+  const dt = new Date(r.created_at);
+  return {
+    id: r.id,
+    data: dt.toISOString().split("T")[0],
+    dia: dt.toLocaleDateString("pt-PT", { weekday: "short" }),
+    hora: dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    tipo: "comida" as const,
+    food_name: r.food_name,
+    quantity: r.quantity,
+    calories: r.calories,
+    carbs: r.carbs,
+    glycemic_index: r.glycemic_index,
+    glycemic_impact: r.glycemic_impact,
+  };
+});
+
+const reg3: Registo[] = (meds || []).map((r) => {
+  const dt = new Date(r.created_at);
+  return {
+    id: r.id,
+    data: dt.toISOString().split("T")[0],
+    dia: dt.toLocaleDateString("pt-PT", { weekday: "short" }),
+    hora: dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    tipo: "medicamento" as const,
+    medicamento: r.tipo,
+    dose: r.quantidade,
+    descricao: r.descricao,
+  };
+});
+
+
+      const todos = [...reg1, ...reg2, ...reg3].sort((a, b) =>
+        new Date(`${b.data}T${b.hora}`).getTime() - new Date(`${a.data}T${a.hora}`).getTime()
+      );
+
+      setRegistros(todos);
+    } catch (err: any) {
+      console.error("Erro ao carregar dados:", err);
+    }
+  };
+
+  carregarTodos();
+
+  const channel = supabase
+    .channel('explore-updates')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'dados_utilizador' },
+      () => carregarTodos()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'comida' },
+      () => carregarTodos()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'medicamentos' },
+      () => carregarTodos()
+    )
+    .subscribe();
+
+  return () => {
+    mounted = false;
+    supabase.removeChannel(channel);
+  };
+}, []);
+
 
   const registosFiltrados = registros.filter((r) => r.data === selectedDate);
 

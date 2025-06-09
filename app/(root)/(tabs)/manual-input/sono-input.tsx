@@ -39,8 +39,8 @@ const SonoInputScreen = () => {
     }
 
     try {
-      // 1. Guardar no Supabase - tabela dados_usuario
-      const { error } = await supabase.from('dados_usuario').insert([
+      
+      const { error } = await supabase.from('dados_utilizador').insert([
         {
           user_id: userId,
           sono: Number(sleepHours),
@@ -54,7 +54,7 @@ const SonoInputScreen = () => {
       ]);
 
       if (error) {
-        console.error('Erro ao guardar em dados_usuario:', error);
+        console.error('Erro ao guardar em dados_utilizador:', error);
         Alert.alert('Erro', 'Erro ao guardar os dados.');
         return;
       }

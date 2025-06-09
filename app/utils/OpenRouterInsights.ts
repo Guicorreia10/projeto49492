@@ -2,7 +2,15 @@ import { Registo } from "../types";
 import Constants from "expo-constants";
 
 function getTopNByTipo(registos: Registo[], n: number): Registo[] {
-  const tipos = ["glicose", "sono", "comida", "medicamento", "smartwatch_sono", "smartwatch_passos", "smartwatch_exercicio"];
+  const tipos = [
+    "glicose",
+    "sono",
+    "comida",
+    "medicamento",
+    "smartwatch_sono",
+    "smartwatch_passos",
+    "smartwatch_exercicio",
+  ];
   let selecionados: Registo[] = [];
 
   for (const tipo of tipos) {
@@ -20,23 +28,27 @@ export async function gerarOpenRouterInsights(registos: Registo[]): Promise<stri
   const apiKey = Constants.expoConfig?.extra?.OPENROUTER_API_KEY;
 
   if (!apiKey) {
-    console.warn(" API key do OpenRouter não encontrada.");
-    return ["Erro: Chave de API não configurada."];
+    console.warn("API key do OpenRouter não encontrada.");
+    return [" Erro: Chave de API não configurada."];
   }
 
-  // Limitar registos (3 por tipo, máx 21)
   const dadosFiltrados = getTopNByTipo(registos, 3);
-  console.log("📤 Dados enviados para IA:", JSON.stringify(dadosFiltrados, null, 2));
+  console.log(" Dados enviados para IA:", JSON.stringify(dadosFiltrados, null, 2));
 
   const mensagens = [
     {
       role: "system",
-      content:
-        "És um assistente de saúde inteligente. Com base nos registos fornecidos (sono, glicose, alimentação, medicamentos), gera insights personalizados e úteis. Foca-te em padrões, correlações e sugestões realistas. Fala sempre em português de Portugal.",
+      content: `És um assistente de saúde digital inteligente. Com base nos registos fornecidos (glicose, sono, alimentação, exercício, medicamentos), cria 5 insights claros, úteis e personalizados. 
+      
+- Usa português de Portugal.
+- Formata com bullet points.
+- Foca-te em padrões, correlações e sugestões realistas.
+- Evita repetir frases genéricas. Sê útil e específico.
+- Inclui pelo menos um insight para cada tipo de registo.`,
     },
     {
       role: "user",
-      content: `Aqui estão os dados do utilizador (JSON):\n${JSON.stringify(dadosFiltrados, null, 2)}\n\nCria 5 insights personalizados em bullet points. Dá pelo menos um insight sobre cada tipo de registo: glicose, sono, alimentação, medicamentos.`,
+      content: `Dados do utilizador (JSON):\n${JSON.stringify(dadosFiltrados, null, 2)}\n\nGera os insights agora.`,
     },
   ];
 
@@ -49,10 +61,10 @@ export async function gerarOpenRouterInsights(registos: Registo[]): Promise<stri
         "HTTP-Referer": "https://glicosleep.app",
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4",
         messages: mensagens,
-        temperature: 0.7,
-        max_tokens: 400,
+        temperature: 0.6,
+        max_tokens: 1000,
       }),
     });
 
@@ -60,15 +72,14 @@ export async function gerarOpenRouterInsights(registos: Registo[]): Promise<stri
     console.log("🤖 Resposta da IA:", JSON.stringify(data, null, 2));
 
     const conteudo = data.choices?.[0]?.message?.content;
-
-    if (!conteudo) return ["Não foi possível criar insights neste momento."];
+    if (!conteudo) return ["❌ Não foi possível criar insights neste momento."];
 
     return conteudo
       .split("\n")
       .map((linha: string) => linha.trim())
       .filter((linha: string) => linha.length > 0);
   } catch (err) {
-    console.error("❌ Erro ao contactar o OpenRouter:", err);
-    return ["Erro ao gerar insights com IA."];
+    console.error("❌ Erro na conexão com o OpenRouter:", err);
+    return ["Erro ao criar insights com IA."];
   }
 }

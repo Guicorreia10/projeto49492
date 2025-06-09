@@ -37,10 +37,6 @@ export default function Profile() {
     }
   };
 
-  const changeLanguage = (lang: string) => {
-    setLanguage(lang);
-    Alert.alert("Idioma alterado", `Agora está em: ${lang}`);
-  };
 
   
   useEffect(() => {
@@ -52,7 +48,7 @@ export default function Profile() {
       setUserId(uid);
 
       const { data } = await supabase
-        .from("dados_usuario")
+        .from("dados_utilizador")
         .select("nome_completo, foto_url")
         .eq("user_id", uid)
         .limit(1)
@@ -68,7 +64,7 @@ export default function Profile() {
           {
             event: "UPDATE",
             schema: "public",
-            table: "dados_usuario",
+            table: "dados_utilizador",
             filter: `user_id=eq.${uid}`,
           },
           (payload) => {
@@ -117,10 +113,13 @@ export default function Profile() {
 
       const { data: publicUrl } = supabase.storage.from("avatars").getPublicUrl(path);
 
-      const { error: updateError } = await supabase
-        .from("dados_usuario")
-        .update({ foto_url: publicUrl.publicUrl })
-        .eq("user_id", userId);
+  const urlComTimestamp = `${publicUrl.publicUrl}?t=${Date.now()}`;
+
+  const { error: updateError } = await supabase
+    .from("dados_utilizador")
+    .update({ foto_url: urlComTimestamp })
+    .eq("user_id", userId);
+
 
       if (!updateError) {
         setAvatarUrl(`${publicUrl.publicUrl}?t=${Date.now()}`);
@@ -176,20 +175,7 @@ export default function Profile() {
 />
           </Section>
 
-          <Section title="Preferências">
-            <MenuItem
-              icon={icons.language}
-              label={`Idioma: ${language}`}
-              onPress={() =>
-                Alert.alert("Idioma", "Escolhe o idioma:", [
-                  { text: "Português", onPress: () => changeLanguage("Português") },
-                  { text: "English", onPress: () => changeLanguage("English") },
-                  { text: "Cancelar", style: "cancel" },
-                ])
-              }
-            />
-            
-          </Section>
+          
 
           <Section title="Ajuda & Sessão">
             <MenuItem icon={icons.info} label="Ajuda e Informações" onPress={() => router.push("/help")} />
