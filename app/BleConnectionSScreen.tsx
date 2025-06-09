@@ -102,63 +102,84 @@ export default function BLEConnectionsScreen() {
 
 
   const handleConnectAndFetch = async (device: Device) => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-    stopScan();
-    try {
-      console.log("🔗 A ligar ao dispositivo:", device.name || device.id);
-      let connected: Device;
-      if (await device.isConnected()) {
-        connected = device;
-      } else {
-        connected = await managerRef.current.connectToDevice(device.id);
-        await connected.discoverAllServicesAndCharacteristics();
-      }
+  if (isProcessing) return;
+  setIsProcessing(true);
+  stopScan();
 
-      await delay(3000); // atraso de 3 segundos para garantir atualização de dados no smartwatch
+  try {
+    console.log("🔗 A ligar ao dispositivo:", device.name || device.id);
 
-      const readBuffer = async (charUUID: string): Promise<Buffer> => {
-        const res = await connected.readCharacteristicForService(SERVICE_HAYLOU, charUUID);
-        const buf = Buffer.from(res.value || '', 'base64');
-        return buf;
-      };
-
-      const passosBuf = await readBuffer(CHAR_PASSOS);
-      const sonoBuf = await readBuffer(CHAR_SONO);
-      const exercicioBuf = await readBuffer(CHAR_EXERCICIO);
-
-      const passosVal = passosBuf.length >= 3 ? passosBuf[2] & 0x1F : 0;
-      const sonoVal = sonoBuf.length >= 1 ? sonoBuf[0] & 0x1F : 0;
-      const exercicioVal = exercicioBuf.length >= 1 ? exercicioBuf[0] & 0x1F : 0;
-
-      setPassos(passosVal);
-      setSono(sonoVal);
-      setExercicio(exercicioVal);
-
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-      if (!userId) throw new Error("Utilizador não autenticado");
-
-      const registos = [
-        { tipo: "passos", valor: passosVal, unidade: "unidades" },
-        { tipo: "sono", valor: sonoVal, unidade: "minutos" },
-        { tipo: "exercicio", valor: exercicioVal, unidade: "minutos" },
-      ];
-
-      const { error } = await supabase.from("dados_smartwatch").insert(
-        registos.map(r => ({ ...r, user_id: userId }))
-      );
-
-      if (error) throw error;
-
-      Alert.alert("✅ Sucesso", `Passos: ${passosVal}\nSono: ${sonoVal} min\nExercício: ${exercicioVal} min`);
-    } catch (err: any) {
-      console.error("Erro:", err);
-      Alert.alert("Erro", err.message || "Erro ao processar dispositivo.");
-    } finally {
+    if (!device.name?.toLowerCase().includes("haylou")) {
+      Alert.alert("⚠️ Dispositivo não suportado", "Este dispositivo não parece ser um Haylou Solar.");
       setIsProcessing(false);
+      return;
     }
-  };
+
+    let connected: Device;
+    if (await device.isConnected()) {
+      connected = device;
+    } else {
+      connected = await managerRef.current.connectToDevice(device.id);
+      await connected.discoverAllServicesAndCharacteristics();
+    }
+
+    await delay(3000); // Espera para garantir dados atualizados
+
+    const readBuffer = async (charUUID: string): Promise<Buffer> => {
+      const res = await connected.readCharacteristicForService(SERVICE_HAYLOU, charUUID);
+      const buf = Buffer.from(res.value || '', 'base64');
+      return buf;
+    };
+
+    const passosBuf = await readBuffer(CHAR_PASSOS);
+    const sonoBuf = await readBuffer(CHAR_SONO);
+    const exercicioBuf = await readBuffer(CHAR_EXERCICIO);
+
+    console.log("📦 Buffers:");
+    console.log("Passos:", passosBuf.toString('hex'), passosBuf);
+    console.log("Sono:", sonoBuf.toString('hex'), sonoBuf);
+    console.log("Exercício:", exercicioBuf.toString('hex'), exercicioBuf);
+
+    const passosVal = passosBuf.length >= 3 ? passosBuf[2] & 0x1F : 0;
+    const sonoVal = sonoBuf.length >= 1 ? sonoBuf[0] & 0x1F : 0;
+    const exercicioVal = exercicioBuf.length >= 1 ? exercicioBuf[0] & 0x1F : 0;
+
+    // Evita guardar valores nulos ou claramente inválidos
+    if (passosVal === 0 && sonoVal === 0 && exercicioVal === 0) {
+      Alert.alert("⚠️ Sem dados", "Não foram recebidos dados válidos. Certifica-te que o relógio está atualizado.");
+      setIsProcessing(false);
+      return;
+    }
+
+    setPassos(passosVal);
+    setSono(sonoVal);
+    setExercicio(exercicioVal);
+
+    const { data: auth } = await supabase.auth.getUser();
+    const userId = auth?.user?.id;
+    if (!userId) throw new Error("Utilizador não autenticado");
+
+   const registos = [
+  { tipo: "passos", valor: passosVal, unidade: "unidades" },
+  { tipo: "sono", valor: sonoVal, unidade: "minutos" },
+  { tipo: "exercicio", valor: exercicioVal, unidade: "minutos" },
+];
+
+const { error } = await supabase.from("dados_smartwatch").insert(
+  registos.map(r => ({ ...r, user_id: userId }))
+);
+
+
+    if (error) throw error;
+
+    Alert.alert("✅ Sucesso", `Passos: ${passosVal}\nSono: ${sonoVal} min\nExercício: ${exercicioVal} min`);
+  } catch (err: any) {
+    console.error("Erro:", err);
+    Alert.alert("Erro", err.message || "Erro ao processar dispositivo.");
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   return (
     <View style={styles.container}>

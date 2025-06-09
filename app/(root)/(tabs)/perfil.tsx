@@ -1,6 +1,4 @@
-// Ecrã de perfil com atualização da foto imediatamente após upload + simulação BLE
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -14,6 +12,7 @@ import * as ImagePicker from "expo-image-picker";
 import mime from "react-native-mime-types";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { supabase } from "@/lib/supabase";
 import icons from "@/constants/icons";
 import images from "@/constants/images";
@@ -25,8 +24,6 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [language, setLanguage] = useState("Português");
-
 
   const handleLogout = async () => {
     try {
@@ -37,53 +34,59 @@ export default function Profile() {
     }
   };
 
+  const fetchUser = async () => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth?.user) return;
 
-  
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth?.user) return;
+    const uid = auth.user.id;
+    setUserId(uid);
 
-      const uid = auth.user.id;
-      setUserId(uid);
+    const { data } = await supabase
+      .from("dados_utilizador")
+      .select("nome_completo, foto_url")
+      .eq("user_id", uid)
+      .limit(1)
+      .single();
 
-      const { data } = await supabase
-        .from("dados_utilizador")
-        .select("nome_completo, foto_url")
-        .eq("user_id", uid)
-        .limit(1)
-        .single();
+    if (data?.nome_completo) setUsername(data.nome_completo);
+    if (data?.foto_url) setAvatarUrl(data.foto_url);
 
-      if (data?.nome_completo) setUsername(data.nome_completo);
-      if (data?.foto_url) setAvatarUrl(data.foto_url);
+    const channel = supabase
+      .channel("profile-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "dados_utilizador",
+          filter: `user_id=eq.${uid}`,
+        },
+        (payload) => {
+          if (payload.new?.foto_url) setAvatarUrl(payload.new.foto_url);
+          if (payload.new?.nome_completo) setUsername(payload.new.nome_completo);
+        }
+      )
+      .subscribe();
 
-      const channel = supabase
-        .channel("profile-updates")
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "dados_utilizador",
-            filter: `user_id=eq.${uid}`,
-          },
-          (payload) => {
-            if (payload.new?.foto_url) {
-              setAvatarUrl(payload.new.foto_url);
-            }
-          }
-        )
-        .subscribe();
+    setLoading(false);
 
-      setLoading(false);
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+    return () => {
+      supabase.removeChannel(channel);
     };
+  };
 
-    fetchUser();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let cleanup: any;
+      setLoading(true);
+      fetchUser().then((cleanFn) => {
+        cleanup = cleanFn;
+      });
+      return () => {
+        if (cleanup) cleanup();
+      };
+    }, [])
+  );
 
   const pickAndUploadImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -112,17 +115,15 @@ export default function Profile() {
       }
 
       const { data: publicUrl } = supabase.storage.from("avatars").getPublicUrl(path);
+      const urlComTimestamp = `${publicUrl.publicUrl}?t=${Date.now()}`;
 
-  const urlComTimestamp = `${publicUrl.publicUrl}?t=${Date.now()}`;
-
-  const { error: updateError } = await supabase
-    .from("dados_utilizador")
-    .update({ foto_url: urlComTimestamp })
-    .eq("user_id", userId);
-
+      const { error: updateError } = await supabase
+        .from("dados_utilizador")
+        .update({ foto_url: urlComTimestamp })
+        .eq("user_id", userId);
 
       if (!updateError) {
-        setAvatarUrl(`${publicUrl.publicUrl}?t=${Date.now()}`);
+        setAvatarUrl(urlComTimestamp);
       }
     }
   };
@@ -168,14 +169,12 @@ export default function Profile() {
             <MenuItem icon={icons.calendar} label="Histórico" onPress={() => router.push("/explore")} />
             <MenuItem icon={icons.altconta} label="Editar Conta" onPress={() => router.push("/(root)/editarconta")} />
             <MenuItem icon={icons.shield} label="Privacidade" onPress={() => router.push("/(root)/politica")} />
-              <MenuItem
+            <MenuItem
               icon={icons.bed}
               label="Conexões Bluetooth"
               onPress={() => router.push("../../../BleConnectionSScreen")}
-/>
+            />
           </Section>
-
-          
 
           <Section title="Ajuda & Sessão">
             <MenuItem icon={icons.info} label="Ajuda e Informações" onPress={() => router.push("/help")} />

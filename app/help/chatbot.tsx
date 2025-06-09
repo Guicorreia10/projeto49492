@@ -22,7 +22,7 @@ export default function Chatbot() {
     {
       role: 'system',
       content:
-        'És o GlicoBot, um assistente amigável especializado em sono, glicose e bem-estar, que fala em português de Portugal, estás .',
+        'És o GlicoBot, um assistente amigável que fala português de Portugal de forma clara. Estás integrado numa app de bem-estar chamada GlicoSleep. A app permite aos utilizadores monitorizar glicose, sono, passos e exercício físico, comunicar com wearables e receber recomendações personalizadas. Contém ainda questionários científicos para melhor compreensão  dos utilizadores .Responde de forma clara, útil e simpática, sempre com foco em melhorar a saúde e bem-estar do utilizador.',
     },
   ]);
 
@@ -69,7 +69,7 @@ export default function Chatbot() {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4',
           messages: newHistory,
                  }),
       });
