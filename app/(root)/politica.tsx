@@ -57,6 +57,13 @@ const Politica = () => {
           </Text>
         </Section>
 
+        <Section title="8. Definições Bluetooth">
+          <Text className="text-base text-gray-700">
+            O acesso a dados via wearable está dependente da versão e fabricante do seu smartwatch.
+            A GlicoSleep não é responsável por alterações de política de privacidade de terceiros.
+          </Text>
+        </Section>
+
         <Text className="mt-6 text-base text-gray-700">
           Para qualquer dúvida, entre em contacto connosco em <Text className="font-semibold">glicosleep@gmail.com</Text>.
         </Text>
